@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TICKET SALE | College Hub</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f4f7fa;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    header {
+      background: linear-gradient(135deg, #315e7d 0%, #4a90e2 100%);
+      padding: 40px 20px;
+      text-align: center;
+      border-bottom: 4px solid #ffffff;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    header .container h1 {
+      color: #ffffff;
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    header .container p {
+      color: #e0e7ff;
+      font-size: 1.2rem;
+    }
+
+    nav {
+      display: flex;
+      justify-content: center;
+      background-color: #dbedff;
+      padding: 15px 0;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    nav ul {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    nav ul li {
+      margin: 0 20px;
+      white-space: nowrap;
+    }
+
+    nav ul li a {
+      text-decoration: none;
+      color: #315e7d;
+      font-size: 1.1rem;
+      font-weight: 600;
+      transition: color 0.3s ease;
+    }
+
+    nav ul li a:hover {
+      color: #007bff;
+    }
+
+    .sell-item {
+      padding: 24px;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      margin: 20px;
+      background-color: #f9f9f9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      max-width: 300px;
+    }
+
+    .sell-item img {
+      max-width: 100%;
+      max-height: 150px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+
+    .empty-state img {
+      width: 100px;
+      margin-bottom: 16px;
+    }
+
+    .empty-state h3 {
+      margin: 0;
+      font-size: 20px;
+      color: #333;
+    }
+
+    .empty-state p {
+      color: #777;
+      margin-top: 8px;
+    }
+
+    .sell {
+      text-align: center;
+      padding: 30px 20px;
+    }
+
+    .sell h2 {
+      font-size: 2rem;
+      color: #315e7d;
+      margin-bottom: 20px;
+    }
+
+    .toggle-form-container {
+      text-align: center;
+      margin: 30px 0;
+    }
+
+    .btn-primary {
+      background-color: #315e7d;
+      color: #ffffff;
+      border: none;
+      padding: 12px 24px;
+      font-size: 1.1rem;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    .btn-primary:hover {
+      background-color: #4a90e2;
+      transform: translateY(-2px);
+    }
+
+    .sell-form {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      display: none;
+    }
+
+    .sell-form h2 {
+      font-size: 1.8rem;
+      color: #315e7d;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 5px;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select,
+    .form-group input[type="file"] {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ced4da;
+      border-radius: 5px;
+      font-size: 1rem;
+      transition: border-color 0.3s ease;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus,
+    .form-group input[type="file"]:focus {
+      border-color: #4a90e2;
+      outline: none;
+    }
+
+    .form-group select {
+      appearance: none;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24"><path fill="%23333" d="M7 10l5 5 5-5z"/></svg>') no-repeat right 10px center;
+      background-size: 12px;
+    }
+
+    .main-footer {
+      background-color: #315e7d;
+      color: #ffffff;
+      padding: 40px 20px;
+      margin-top: 40px;
+    }
+
+    .footer-content {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .footer-column {
+      flex: 1;
+      min-width: 200px;
+      margin: 10px;
+    }
+
+    .footer-column h3 {
+      font-size: 1.5rem;
+      margin-bottom: 15px;
+    }
+
+    .footer-column p,
+    .footer-column ul li {
+      font-size: 1rem;
+      margin-bottom: 10px;
+    }
+
+    .footer-column ul {
+      list-style: none;
+    }
+
+    .footer-column ul li a {
+      color: #e0e7ff;
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+
+    .footer-column ul li a:hover {
+      color: #4a90e2;
+    }
+
+    .social-links a {
+      color: #ffffff;
+      margin-right: 15px;
+      font-size: 1.2rem;
+      transition: color 0.3s ease;
+    }
+
+    .social-links a:hover {
+      color: #4a90e2;
+    }
+
+    .copyright {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 0.9rem;
+      color: #e0e7ff;
+    }
+
+    @media (max-width: 768px) {
+      nav ul li {
+        margin: 0 10px;
+      }
+
+      .footer-content {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .sell-item {
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>MARKET PLACE & TICKET EXCHANGE</h1>
+      <p>SELL ITEMS AND PRODUCTS</p>
+    </div>
+  </header>
+  <nav>
+    Ascending
+    <ul>
+      <li><a href="./index.html">Home</a></li>
+      <li><a href="./lost-found.html">Marketplace</a></li>
+      <li><a href="./exams.html">Exam Papers</a></li>
+      <li><a href="./announcements.html">Announcements</a></li>
+    </ul>
+  </nav>
+
+  <div class="sell">
+    <h2>Recent Items</h2>
+    <div id="sellcontainer" style="display: flex; flex-wrap: wrap; justify-content: center;">
+      <div class="empty-state">
+        <img src="https://cdn-icons-png.flaticon.com/512/4076/4076478.png" alt="No items found">
+        <h3>No items found</h3>
+        <p>Use the form below to add one!</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="toggle-form-container">
+    <button id="toggleFormBtn" class="btn-primary">
+      <i class="fas fa-plus-circle"></i> Sell an Item
+    </button>
+  </div>
+
+  <div id="sellForm" class="sell-form">
+    <h2>Sell an Item</h2>
+    <form id="itemForm" enctype="multipart/form-data">
+      <div class="form-group">
+        <label for="itemName">Item Name:</label>
+        <input type="text" id="itemName" name="itemName" required>
+      </div>
+      <div class="form-group">
+        <label for="itemDescription">Description:</label>
+        <textarea id="itemDescription" name="itemDescription" required rows="4"></textarea>
+      </div>
+      <div class="form-group">
+        <label for="itemPrice">Price:</label>
+        <input type="number" id="itemPrice" name="itemPrice" required min="0" step="0.01">
+      </div>
+      <div class="form-group">
+        <label for="details">Details:</label>
+        <input type="text" id="details" name="details" required>
+      </div>
+      <div class="form-group">
+        <label for="itemCategory">Category:</label>
+        <select id="itemCategory" name="itemCategory" required>
+          <option value="" disabled selected>Select a category</option>
+          <option value="electronics">Electronics</option>
+          <option value="books">Books</option>
+          <option value="furniture">Furniture</option>
+          <option value="ticket">Ticket</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="image">Image:</label>
+        <input type="file" id="image" name="image" accept="image/jpeg,image/png">
+      </div>
+      <button type="submit" class="btn-primary">Submit Item</button>
+    </form>
+  </div>
+
+  <footer class="main-footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-column">
+          <h3>College Hub</h3>
+          <p>Your one-stop platform for all campus needs and services.</p>
+          <div class="social-links">
+            <a href="#"><i class="fab fa-facebook-f"></i></a>
+            <a href="#"><i class="fab fa-twitter"></i></a>
+            <a href="#"><i class="fab fa-instagram"></i></a>
+          </div>
+        </div>
+        <div class="footer-column">
+          <h3>Quick Links</h3>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="lost-found.html">Marketplace</a></li>
+            <li><a href="exams.html">Exam Papers</a></li>
+            <li><a href="announcements.html">Announcements</a></li>
+          </ul>
+        </div>
+        <div class="footer-column">
+          <h3>Contact</h3>
+          <ul>
+            <li><i class="fas fa-envelope"></i> help@collegehub.edu</li>
+            <li><i class="fas fa-phone"></i> (123) 456-7890</li>
+            <li><i class="fas fa-map-marker-alt"></i> Campus Center, Room 101</li>
+          </ul>
+        </div>
+      </div>
+      <div class="copyright">
+        <p>© 2025 College Hub. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const API_BASE_URL = 'http://localhost:3000/api';
+    const sellContainer = document.getElementById('sellcontainer');
+    const itemForm = document.getElementById('itemForm');
+
+    async function fetchItems() {
+      try {
+        const res = await fetch(`${API_BASE_URL}/marketplace`);
+        if (!res.ok) throw new Error('Failed to fetch items');
+        const items = await res.json();
+
+        if (items.length === 0) {
+          sellContainer.innerHTML = `
+            <div class="empty-state">
+              <img src="https://cdn-icons-png.flaticon.com/512/4076/4076478.png" alt="No items found">
+              <h3>No items found</h3>
+              <p>Use the form below to add one!</p>
+            </div>
+          `;
+          return;
+        }
+
+        sellContainer.innerHTML = '';
+        items.forEach(item => {
+          const card = document.createElement('div');
+          card.className = 'sell-item';
+          card.innerHTML = `
+            ${item.imageUrl ? `<img src="${item.imageUrl}" alt="${item.itemName}">` : ''}
+            <h3>${item.itemName}</h3>
+            <p><strong>Price:</strong> ₹${item.itemPrice.toFixed(2)}</p>
+            <p>${item.itemDescription}</p>
+            <p><strong>Details:</strong> ${item.details}</p>
+            <p><strong>Category:</strong> ${item.itemCategory}</p>
+          `;
+          sellContainer.appendChild(card);
+        });
+      } catch (err) {
+        console.error('Error fetching items:', err);
+        sellContainer.innerHTML = `<p style="color:red;">Failed to load items: ${err.message}</p>`;
+      }
+    }
+
+    document.getElementById('toggleFormBtn').addEventListener('click', () => {
+      const form = document.getElementById('sellForm');
+      form.style.display = form.style.display === 'block' ? 'none' : 'block';
+    });
+
+    itemForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(itemForm);
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/marketplace`, {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || 'Failed to submit item');
+        }
+
+        alert('Item submitted successfully!');
+        itemForm.reset();
+        document.getElementById('sellForm').style.display = 'none';
+        fetchItems();
+      } catch (err) {
+        console.error('Error submitting item:', err);
+        alert(`Error submitting item: ${err.message}`);
+      }
+    });
+
+    window.addEventListener('DOMContentLoaded', fetchItems);
+  </script>
+</body>
+</html>

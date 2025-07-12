@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lost & Found - College Hub</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    /* Global Styles */
+    :root {
+      --primary-color: #3498db;
+      --secondary-color: #2ecc71;
+      --dark-color: #2c3e50;
+      --light-color: #ecf0f1;
+      --danger-color: #e74c3c;
+      --warning-color: #f39c12;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background-color: #f9f9f9;
+    }
+    
+    .container {
+      width: 90%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 15px;
+    }
+    
+    a {
+      text-decoration: none;
+      color: var(--primary-color);
+    }
+    
+    ul {
+      list-style: none;
+    }
+    
+    .btn {
+      display: inline-block;
+      padding: 10px 20px;
+      background-color: var(--primary-color);
+      color: white;
+      border-radius: 5px;
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+    }
+    
+    .btn:hover {
+      background-color: #2980b9;
+      transform: translateY(-2px);
+    }
+    
+    .btn-primary {
+      background-color: var(--primary-color);
+    }
+    
+    .btn-secondary {
+      background-color: var(--secondary-color);
+    }
+    
+    /* Header Styles */
+    .lf-header {
+      background-color: var(--dark-color);
+      color: white;
+      padding: 30px 0;
+      text-align: center;
+    }
+    
+    .lf-header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+    
+    .lf-header h1 i {
+      margin-right: 15px;
+    }
+    
+    /* Navigation Styles */
+    .main-nav {
+      background-color: var(--primary-color);
+      padding: 15px 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .main-nav ul {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    
+    .main-nav li {
+      margin: 0 15px;
+    }
+    
+    .main-nav a {
+      color: white;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+    }
+    
+    .main-nav a i {
+      margin-right: 8px;
+    }
+    
+    /* Lost & Found Items Section */
+    .lf-items-section {
+      margin: 40px 0;
+    }
+    
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+    
+    .section-header h2 {
+      font-size: 1.8rem;
+      color: var(--dark-color);
+    }
+    
+    .section-header h2 i {
+      margin-right: 10px;
+      color: var(--primary-color);
+    }
+    
+    .filter-controls {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .filter-btn {
+      padding: 8px 15px;
+      background-color: var(--light-color);
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .filter-btn.active {
+      background-color: var(--primary-color);
+      color: white;
+    }
+    
+    .items-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 25px;
+    }
+    
+    .item-card {
+      background-color: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease;
+    }
+    
+    .item-card:hover {
+      transform: translateY(-5px);
+    }
+    
+    .item-image {
+      height: 200px;
+      overflow: hidden;
+    }
+    
+    .item-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.5s ease;
+    }
+    
+    .item-card:hover .item-image img {
+      transform: scale(1.05);
+    }
+    
+    .item-details {
+      padding: 20px;
+    }
+    
+    .item-status {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    
+    .status-lost {
+      background-color: #fdeaea;
+      color: var(--danger-color);
+    }
+    
+    .status-found {
+      background-color: #e8f5e9;
+      color: var(--secondary-color);
+    }
+    
+    .item-details h3 {
+      margin-bottom: 10px;
+      color: var(--dark-color);
+    }
+    
+    .item-meta {
+      display: flex;
+      align-items: center;
+      margin: 10px 0;
+      font-size: 0.9rem;
+    }
+    
+    .item-meta i {
+      margin-right: 8px;
+      color: var(--primary-color);
+    }
+    
+    .item-description {
+      margin: 15px 0;
+      font-size: 0.95rem;
+      color: #666;
+    }
+    
+    .item-contact {
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid #eee;
+      font-size: 0.9rem;
+    }
+    
+    /* Form Section */
+    .lf-form-section {
+      margin: 40px 0;
+    }
+    
+    .form-container {
+      background-color: white;
+      border-radius: 8px;
+      padding: 30px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    .form-container h2 {
+      margin-bottom: 25px;
+      color: var(--dark-color);
+    }
+    
+    .form-container h2 i {
+      margin-right: 10px;
+      color: var(--primary-color);
+    }
+    
+    .lf-form .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .lf-form label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: var(--dark-color);
+    }
+    
+    .lf-form input,
+    .lf-form select,
+    .lf-form textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-family: inherit;
+      font-size: 1rem;
+    }
+    
+    .lf-form textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+    
+    .image-upload {
+      display: flex;
+      align-items: center;
+    }
+    
+    .upload-btn {
+      padding: 10px 15px;
+      background-color: var(--light-color);
+      border-radius: 5px;
+      cursor: pointer;
+      margin-right: 15px;
+    }
+    
+    .upload-btn:hover {
+      background-color: #e0e0e0;
+    }
+    
+    .file-name {
+      font-size: 0.9rem;
+      color: #666;
+    }
+    
+    /* Footer Styles */
+    .main-footer {
+      background-color: var(--dark-color);
+      color: white;
+      padding: 60px 0 20px;
+    }
+    
+    .footer-content {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 30px;
+      margin-bottom: 40px;
+    }
+    
+    .footer-column h3 {
+      margin-bottom: 20px;
+      font-size: 1.3rem;
+      position: relative;
+      padding-bottom: 10px;
+    }
+    
+    .footer-column h3::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 50px;
+      height: 2px;
+      background-color: var(--primary-color);
+    }
+    
+    .footer-column ul li {
+      margin-bottom: 10px;
+    }
+    
+    .footer-column ul li i {
+      margin-right: 8px;
+      width: 20px;
+      text-align: center;
+    }
+    
+    .social-links {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    
+    .social-links a {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      margin: 0 10px;
+      color: white;
+      transition: all 0.3s ease;
+    }
+    
+    .social-links a:hover {
+      background-color: var(--primary-color);
+      transform: translateY(-3px);
+    }
+    
+    .copyright {
+      text-align: center;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    /* Responsive Styles */
+    @media (max-width: 768px) {
+      .main-nav ul {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .main-nav li {
+        margin: 5px 0;
+      }
+      
+      .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .filter-controls {
+        margin-top: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="lf-header">
+    <div class="container">
+      <h1><i class="fas fa-search"></i> Lost & Found</h1>
+      <p>Help reunite lost items with their owners</p>
+    </div>
+  </header>
+
+  <!-- Navigation -->
+  <nav class="main-nav">
+    <div class="container">
+      <ul>
+        <li><a href="index.html"><i class="fas fa-home"></i> Home</a></li>
+        <li><a href="marketplace.html"><i class="fas fa-store"></i> Marketplace</a></li>
+        <li><a href="exams.html"><i class="fas fa-book-open"></i> Exam Papers</a></li>
+        <li><a href="announcements.html"><i class="fas fa-bullhorn"></i> Announcements</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="container">
+    <!-- 1. Display Items First -->
+    <section class="lf-items-section">
+      <div class="section-header">
+        <h2><i class="fas fa-list"></i> Recent Items</h2>
+        <div class="filter-controls">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="lost">Lost</button>
+          <button class="filter-btn" data-filter="found">Found</button>
+        </div>
+      </div>
+      <div class="items-grid" id="lostItems">
+        <!-- Items will be dynamically loaded here -->
+        <div class="item-card">
+          <div class="item-image">
+            <img src="https://images.unsplash.com/photo-1547036967-23d11aacaee0?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" alt="Lost item">
+          </div>
+          <div class="item-details">
+            <span class="item-status status-lost">Lost</span>
+            <h3>Black Leather Wallet</h3>
+            <div class="item-meta">
+              <i class="fas fa-map-marker-alt"></i>
+              <span>Library - 2nd Floor</span>
+            </div>
+            <div class="item-meta">
+              <i class="fas fa-calendar-alt"></i>
+              <span>June 15, 2023</span>
+            </div>
+            <p class="item-description">Black leather wallet with ID card and credit cards inside. Reward offered for return.</p>
+            <div class="item-contact">
+              <i class="fas fa-user"></i> Contact: john.doe@college.edu
+            </div>
+          </div>
+        </div>
+        
+        <div class="item-card">
+          <div class="item-image">
+            <img src="https://images.unsplash.com/photo-1547721064-da6cfb341d50?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" alt="Found item">
+          </div>
+          <div class="item-details">
+            <span class="item-status status-found">Found</span>
+            <h3>Silver Keychain</h3>
+            <div class="item-meta">
+              <i class="fas fa-map-marker-alt"></i>
+              <span>Cafeteria</span>
+            </div>
+            <div class="item-meta">
+              <i class="fas fa-calendar-alt"></i>
+              <span>June 18, 2023</span>
+            </div>
+            <p class="item-description">Found a silver keychain with 3 keys near the cafeteria entrance.</p>
+            <div class="item-contact">
+              <i class="fas fa-user"></i> Contact: (123) 456-7890
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Toggle Button to Show Form -->
+    <div class="toggle-form-container" style="text-align: center; margin: 30px 0;">
+      <button id="toggleFormBtn" class="btn btn-primary">
+        <i class="fas fa-plus-circle"></i> Report an Item
+      </button>
+    </div>
+
+    <!-- 3. Submission Form (Initially Hidden) -->
+    <section class="lf-form-section" id="reportFormSection" style="display: none;">
+      <div class="form-container">
+        <h2><i class="fas fa-plus-circle"></i> Report an Item</h2>
+        <form id="itemForm" class="lf-form" enctype="multipart/form-data">
+          <!-- Form fields -->
+          <div class="form-group">
+            <label for="itemType">Item Type</label>
+            <select id="itemType" name="type" required>
+              <option value="">Select type</option>
+              <option value="lost">I Lost Something</option>
+              <option value="found">I Found Something</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="itemName">Item Name</label>
+            <input type="text" id="itemName" name="name" placeholder="e.g. Black Wallet, Calculus Textbook" required />
+          </div>
+          <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" name="description" placeholder="Provide details like brand, color, identifying marks..." required></textarea>
+          </div>
+          <div class="form-group">
+            <label for="location">Location</label>
+            <input type="text" id="location" name="location" placeholder="Where was it lost/found?" required />
+          </div>
+          <div class="form-group">
+            <label for="date">Date</label>
+            <input type="date" id="date" name="date" required />
+          </div>
+          <div class="form-group">
+            <label for="image">Upload Image</label>
+            <div class="image-upload">
+              <label for="image" class="upload-btn">
+                <i class="fas fa-camera"></i> Choose Image
+              </label>
+              <input type="file" id="image" name="image" accept="image/*" required />
+              <span class="file-name">No file chosen</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="contact">Contact Info</label>
+            <input type="text" id="contact" name="contact" placeholder="Email or phone number" required />
+          </div>
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-paper-plane"></i> Submit Report
+          </button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="main-footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-column">
+          <h3>College Hub</h3>
+          <p>Your one-stop platform for all campus needs and services.</p>
+          <div class="social-links">
+            <a href="#"><i class="fab fa-facebook-f"></i></a>
+            <a href="#"><i class="fab fa-twitter"></i></a>
+            <a href="#"><i class="fab fa-instagram"></i></a>
+          </div>
+        </div>
+        <div class="footer-column">
+          <h3>Quick Links</h3>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="#">Lost & Found</a></li>
+            <li><a href="#">Marketplace</a></li>
+            <li><a href="#">Exam Papers</a></li>
+          </ul>
+        </div>
+        <div class="footer-column">
+          <h3>Contact</h3>
+          <ul>
+            <li><i class="fas fa-envelope"></i> help@collegehub.edu</li>
+            <li><i class="fas fa-phone"></i> (123) 456-7890</li>
+            <li><i class="fas fa-map-marker-alt"></i> Campus Center, Room 101</li>
+          </ul>
+        </div>
+      </div>
+      <div class="copyright">
+        <p>&copy; 2023 College Hub. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+  
+document.addEventListener('DOMContentLoaded', function () {
+  const API_BASE_URL = 'http://localhost:3000/api';
+  const formSection = document.getElementById('reportFormSection');
+  const toggleButton = document.getElementById('toggleFormBtn');
+  const fileInput = document.getElementById('image');
+  const itemsContainer = document.getElementById('lostItems');
+  const form = document.getElementById('itemForm');
+
+  // Log element status for debugging
+  console.log("formSection:", formSection);
+  console.log("toggleButton:", toggleButton);
+
+  // === Toggle Form Visibility ===
+  if (toggleButton && formSection) {
+    toggleButton.addEventListener('click', function () {
+      const isVisible = formSection.style.display === 'block';
+      formSection.style.display = isVisible ? 'none' : 'block';
+      this.innerHTML = isVisible
+        ? '<i class="fas fa-plus-circle"></i> Report an Item'
+        : '<i class="fas fa-minus-circle"></i> Hide Form';
+    });
+  } else {
+    console.error("One or both elements not found: formSection or toggleButton");
+  }
+
+  // === File Input Display ===
+  if (fileInput) {
+    fileInput.addEventListener('change', function () {
+      const fileName = this.files[0]?.name || 'No file chosen';
+      const fileNameDisplay = document.querySelector('.file-name');
+      if (fileNameDisplay) {
+        fileNameDisplay.textContent = fileName;
+      }
+    });
+  }
+
+  // === Form Submission Logic (unchanged) ===
+  if (form) {
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const submitBtn = this.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+
+      const formData = new FormData(this);
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/upload`, {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Upload failed');
+        }
+
+        const result = await response.json();
+        console.log('[Upload Success]', result);
+        showAlert('Item submitted successfully!', 'success');
+        form.reset();
+        document.querySelector('.file-name').textContent = 'No file chosen';
+        loadItems();
+        formSection.style.display = 'none';
+        toggleButton.innerHTML = '<i class="fas fa-plus-circle"></i> Report an Item';
+
+      } catch (err) {
+        console.error('[Upload Error]', err);
+        showAlert(`Failed to submit item: ${err.message}`, 'error');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Report';
+      }
+    });
+  }
+
+  // === Load Items from API ===
+  async function loadItems(filter = 'all') {
+    try {
+      itemsContainer.innerHTML = '<div class="loading">Loading items...</div>';
+      const res = await fetch(`${API_BASE_URL}/`);
+      if (!res.ok) throw new Error('Failed to fetch items');
+      const items = await res.json();
+      console.log('[Loaded Items]', items.length);
+      renderItems(items, filter);
+    } catch (err) {
+      console.error('[Load Items Error]', err);
+      itemsContainer.innerHTML = `<div class="error">Error loading items: ${err.message}</div>`;
+    }
+  }
+
+  // === Render Items to DOM ===
+  function renderItems(items, filter) {
+    if (!Array.isArray(items) || items.length === 0) {
+      itemsContainer.innerHTML = '<div class="no-items">No items found</div>';
+      return;
+    }
+
+    const filteredItems = filter === 'all'
+      ? items
+      : items.filter(item => item.type === filter);
+
+    if (filteredItems.length === 0) {
+      itemsContainer.innerHTML = '<div class="no-items">No items match this filter</div>';
+      return;
+    }
+
+    itemsContainer.innerHTML = '';
+    filteredItems.forEach(item => {
+      const imageUrl = item.imageUrl
+        ? `/uploads/images/${item.imageUrl}`
+        : 'https://via.placeholder.com/300x200?text=No+Image';
+
+      const card = document.createElement('div');
+      card.className = 'item-card';
+      card.innerHTML = `
+        <div class="item-image">
+          <img src="${imageUrl}" alt="${item.name}"
+               onerror="this.onerror=null; this.src=' https://via.placeholder.com/300x200?text=No+Image';" />
+        </div>
+        <div class="item-details">
+          <span class="item-status ${item.type === 'lost' ? 'status-lost' : 'status-found'}">
+            ${item.type === 'lost' ? 'Lost' : 'Found'}
+          </span>
+          <h3>${item.name}</h3>
+          <div class="item-meta">
+            <i class="fas fa-map-marker-alt"></i>
+            <span>${item.location}</span>
+          </div>
+          <div class="item-meta">
+            <i class="fas fa-calendar-alt"></i>
+            <span>${new Date(item.date).toLocaleDateString()}</span>
+          </div>
+          <p class="item-description">${item.description}</p>
+          <div class="item-contact">
+            <i class="fas fa-user"></i> Contact: ${item.contact}
+          </div>
+        </div>
+      `;
+      itemsContainer.appendChild(card);
+    });
+  }
+
+  // === Filter Buttons ===
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      loadItems(btn.dataset.filter);
+    });
+  });
+
+  // === Show Alert Message ===
+  function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert ${type}`;
+    alertDiv.innerHTML = `
+      <span>${message}</span>
+      <button class="close-btn">&times;</button>
+    `;
+    document.body.appendChild(alertDiv);
+    setTimeout(() => {
+      alertDiv.classList.add('fade-out');
+      setTimeout(() => alertDiv.remove(), 300);
+    }, 5000);
+    alertDiv.querySelector('.close-btn').addEventListener('click', () => {
+      alertDiv.remove();
+    });
+  }
+
+  // === Initial Load ===
+  loadItems();
+});
+
+  </script>
+</body>
+</html>
