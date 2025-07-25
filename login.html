@@ -66,28 +66,26 @@
 </head>
 <body>
   <div class="login-container">
-    <h2>Login with NITC Email</h2>
+  <h2>Login with NITC Email</h2>
 
-    <!-- IMPORTANT: Make sure this URL matches your backend port -->
-    <a href="http://localhost:3000/auth/google" class="google-btn">
-      <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" class="google-icon" alt="Google Logo">
-      Sign in with Google
-    </a>
+  <!-- Static Render login button -->
+  <a href="https://college-community-website.onrender.com/auth/google" class="google-btn">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" class="google-icon" alt="Google Logo">
+    Sign in with Google
+  </a>
 
-    <div class="message" id="message"></div>
-  </div>
+  <div class="message" id="message"></div>
+</div>
 
-  <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const error = urlParams.get('error');
-    const messageEl = document.getElementById('message');
-    if (error) {
-      messageEl.textContent =
-        error === 'auth_failed'
-          ? 'Authentication failed. Please use your NITC email.'
-          : 'An unknown error occurred. Please try again.';
-    }
-    
-  </script>
-</body>
-</html>
+<script>
+  // Handle login errors
+  const urlParams = new URLSearchParams(window.location.search);
+  const error = urlParams.get('error');
+  const messageEl = document.getElementById('message');
+  if (error) {
+    messageEl.textContent =
+      error === 'auth_failed'
+        ? 'Authentication failed. Please use your NITC email.'
+        : 'An unknown error occurred. Please try again.';
+  }
+</script>
