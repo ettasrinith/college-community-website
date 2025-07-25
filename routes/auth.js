@@ -7,11 +7,9 @@ require('dotenv').config();
 
 // Google OAuth Strategy
 passport.use(new GoogleStrategy({
-    clientID: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: '/auth/google/callback',
-    scope: ['profile', 'email'],
-    passReqToCallback: true
+  clientID: process.env.GOOGLE_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  callbackURL: process.env.GOOGLE_CALLBACK_URL
 }, async (req, accessToken, refreshToken, profile, done) => {
     try {
         const email = profile.emails[0].value;
