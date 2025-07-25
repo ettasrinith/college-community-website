@@ -10,8 +10,8 @@ require('dotenv').config();
 // Initialize app
 const app = express();
 
-// MongoDB connection
-mongoose.connect(process.env.MONGODB_URI);
+mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+
 
 
 // Ensure announce directories exist
@@ -29,7 +29,7 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({ 
-        mongoUrl: 'mongodb://localhost:27017/lostfound',
+        mongoUrl:  process.env.MONGO_URI,
         ttl: 14 * 24 * 60 * 60 // = 14 days
     }),
     cookie: {
