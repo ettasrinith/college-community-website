@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login - College Community</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #3a6186, #89253e);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: #fff;
+    }
+
+    .login-container {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+      width: 90%;
+      max-width: 400px;
+      backdrop-filter: blur(10px);
+      text-align: center;
+    }
+
+    .login-container h2 {
+      margin-bottom: 30px;
+      font-size: 28px;
+    }
+
+    .google-btn {
+      background-color: #4285F4;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+      text-decoration: none;
+    }
+
+    .google-btn:hover {
+      background-color: #357ABD;
+    }
+
+    .google-icon {
+      margin-right: 10px;
+      width: 18px;
+      height: 18px;
+    }
+
+    .message {
+      margin-top: 15px;
+      text-align: center;
+      color: #ffeb3b;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <h2>Login with NITC Email</h2>
+
+    <!-- IMPORTANT: Make sure this URL matches your backend port -->
+    <a href="http://localhost:3000/auth/google" class="google-btn">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" class="google-icon" alt="Google Logo">
+      Sign in with Google
+    </a>
+
+    <div class="message" id="message"></div>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const error = urlParams.get('error');
+    const messageEl = document.getElementById('message');
+    if (error) {
+      messageEl.textContent =
+        error === 'auth_failed'
+          ? 'Authentication failed. Please use your NITC email.'
+          : 'An unknown error occurred. Please try again.';
+    }
+    
+  </script>
+</body>
+</html>

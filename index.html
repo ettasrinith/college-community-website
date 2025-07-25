@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>College Hub - Your Campus Companion</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    /* Global Styles */
+    :root {
+      --primary-color: #3498db;
+      --secondary-color: #2ecc71;
+      --dark-color: #2c3e50;
+      --light-color: #ecf0f1;
+      --danger-color: #e74c3c;
+      --warning-color: #f39c12;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background-color: #f9f9f9;
+    }
+    
+    .container {
+      width: 90%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 15px;
+    }
+    
+    a {
+      text-decoration: none;
+      color: var(--primary-color);
+    }
+    
+    ul {
+      list-style: none;
+    }
+    
+    .btn {
+      display: inline-block;
+      padding: 10px 20px;
+      background-color: var(--primary-color);
+      color: white;
+      border-radius: 5px;
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+    }
+    
+    .btn:hover {
+      background-color: #2980b9;
+      transform: translateY(-2px);
+    }
+    
+    /* Header Styles */
+    header {
+      background-color: var(--dark-color);
+      color: white;
+      padding: 20px 0;
+      text-align: center;
+      position: relative;
+    }
+    
+    header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+    
+    /* Navigation Styles */
+    nav {
+      background-color: var(--primary-color);
+      padding: 15px 0;
+      position: relative;
+    }
+    
+    nav ul {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    
+    nav li {
+      margin: 0 15px;
+    }
+    
+    nav a {
+      color: white;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+    }
+    
+    nav a i {
+      margin-right: 8px;
+    }
+    
+    /* User Dropdown Styles */
+    .login-container {
+      position: absolute;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    
+    .user-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+    
+    .user-btn {
+      background-color: rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      transition: all 0.2s;
+    }
+    
+    .user-btn:hover {
+      background-color: rgba(255, 255, 255, 0.3);
+    }
+    
+    .user-btn i {
+      margin-right: 8px;
+    }
+    
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      right: 0;
+      background-color: white;
+      min-width: 160px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      border-radius: 4px;
+      z-index: 1;
+      overflow: hidden;
+    }
+    
+    .dropdown-content a {
+      color: var(--dark-color);
+      padding: 12px 16px;
+      text-decoration: none;
+      display: block;
+      transition: background-color 0.3s;
+    }
+    
+    .dropdown-content a:hover {
+      background-color: var(--light-color);
+    }
+    
+    .dropdown-content a i {
+      margin-right: 8px;
+      width: 20px;
+      text-align: center;
+    }
+    
+    .user-dropdown:hover .dropdown-content {
+      display: block;
+    }
+    
+    /* Hero Section */
+    .hero {
+      background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), 
+                  url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80') no-repeat center center/cover;
+      height: 400px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: white;
+    }
+    
+    .hero-content h2 {
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+    }
+    
+    .hero-content p {
+      font-size: 1.2rem;
+      margin-bottom: 30px;
+      max-width: 700px;
+    }
+    
+    /* Features Section */
+    .features {
+      padding: 60px 0;
+    }
+    
+    .section-title {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    
+    .section-title h2 {
+      font-size: 2rem;
+      color: var(--dark-color);
+      position: relative;
+      display: inline-block;
+      padding-bottom: 10px;
+    }
+    
+    .section-title h2::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 3px;
+      background-color: var(--primary-color);
+    }
+    
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 30px;
+    }
+    
+    .feature-card {
+      background-color: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      transition: transform 0.3s ease;
+    }
+    
+    .feature-card:hover {
+      transform: translateY(-10px);
+    }
+    
+    .feature-icon {
+      width: 70px;
+      height: 70px;
+      background-color: var(--light-color);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+    }
+    
+    .feature-icon i {
+      font-size: 1.8rem;
+      color: var(--primary-color);
+    }
+    
+    .feature-card h3 {
+      margin-bottom: 15px;
+      color: var(--dark-color);
+    }
+    
+    /* Footer Styles */
+    footer {
+      background-color: var(--dark-color);
+      color: white;
+      padding: 60px 0 20px;
+    }
+    
+    .footer-content {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 30px;
+      margin-bottom: 40px;
+    }
+    
+    .footer-column h3 {
+      margin-bottom: 20px;
+      font-size: 1.3rem;
+      position: relative;
+      padding-bottom: 10px;
+    }
+    
+    .footer-column h3::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 50px;
+      height: 2px;
+      background-color: var(--primary-color);
+    }
+    
+    .footer-column ul li {
+      margin-bottom: 10px;
+    }
+    
+    .footer-column ul li i {
+      margin-right: 8px;
+      width: 20px;
+      text-align: center;
+    }
+    
+    .social-links {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    
+    .social-links a {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      margin: 0 10px;
+      color: white;
+      transition: all 0.3s ease;
+    }
+    
+    .social-links a:hover {
+      background-color: var(--primary-color);
+      transform: translateY(-3px);
+    }
+    
+    .copyright {
+      text-align: center;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    /* Responsive Styles */
+    @media (max-width: 768px) {
+      nav ul {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      nav li {
+        margin: 5px 0;
+      }
+      
+      .hero-content h2 {
+        font-size: 2rem;
+      }
+      
+      .hero-content p {
+        font-size: 1rem;
+      }
+      
+      .login-container {
+        position: static;
+        transform: none;
+        text-align: center;
+        margin-top: 15px;
+      }
+      
+      .user-dropdown {
+        display: block;
+        margin: 0 auto;
+      }
+      
+      .dropdown-content {
+        right: auto;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>College Hub</h1>
+      <p>Your one-stop platform for all campus needs</p>
+    </div>
+  </header>
+  
+  <nav>
+    <div class="container">
+      <ul>
+        <li><a href="lost-found.html"><i class="fas fa-search"></i> Lost & Found</a></li>
+        <li><a href="marketplace.html"><i class="fas fa-store"></i> Marketplace</a></li>
+        <li><a href="exams.html"><i class="fas fa-book-open"></i> Exam Papers</a></li>
+        <li><a href="announcements.html"><i class="fas fa-bullhorn"></i> Announcements</a></li>
+      
+      </ul>
+      <div class="login-container">
+        <div class="user-dropdown" id="userDropdown">
+          <button class="user-btn" id="userBtn">
+            <i class="fas fa-user-circle"></i>
+            <span id="username">User ID</span>
+            <i class="fas fa-caret-down"></i>
+          </button>
+          <div class="dropdown-content">
+            <a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="profile.html"><i class="fas fa-user"></i> Profile</a>
+            <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+  
+  <section class="hero">
+    <div class="hero-content">
+      <h2>Connect with Your Campus Community</h2>
+      <p>Find what you need, share what you have, and stay updated with everything happening on campus.</p>
+      <a href="#features" class="btn">Explore Features</a>
+    </div>
+  </section>
+  
+  <section class="features" id="features">
+    <div class="container">
+      <div class="section-title">
+        <h2>Our Services</h2>
+      </div>
+      
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fas fa-search"></i>
+          </div>
+          <h3>Lost & Found</h3>
+          <p>Report lost items or help reunite found belongings with their owners across campus.</p>
+        </div>
+        
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fas fa-exchange-alt"></i>
+          </div>
+          <h3>Marketplace</h3>
+          <p>Buy, sell, or trade textbooks, furniture, electronics and more with fellow students.</p>
+        </div>
+        
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fas fa-graduation-cap"></i>
+          </div>
+          <h3>Exam Papers</h3>
+          <p>Access previous years' exam papers to help with your study and preparation.</p>
+        </div>
+        
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fas fa-calendar-alt"></i>
+          </div>
+          <h3>Announcements</h3>
+          <p>Stay updated with the latest campus news, events, and important deadlines.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <footer>
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-column">
+          <h3>Quick Links</h3>
+          <ul>
+            <li><a href="lost-found.html">Lost & Found</a></li>
+            <li><a href="marketplace.html">Marketplace</a></li>
+            <li><a href="exams.html">Exam Papers</a></li>
+            <li><a href="announcements.html">Announcements</a></li>
+          </ul>
+        </div>
+        
+        <div class="footer-column">
+          <h3>Resources</h3>
+          <ul>
+            <li><a href="#">Academic Calendar</a></li>
+          </ul>
+        </div>
+        
+        <div class="footer-column">
+          <h3>Contact Us</h3>
+          <ul>
+            <li><i class="fas fa-envelope"></i> info@collegehub.edu</li>
+            <li><i class="fas fa-phone"></i> 04952286104</li>
+            <li><i class="fas fa-map-marker-alt"></i> NIT CALICUT 673601</li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="social-links">
+        <a href="#"><i class="fab fa-facebook-f"></i></a>
+        <a href="#"><i class="fab fa-twitter"></i></a>
+        <a href="#"><i class="fab fa-instagram"></i></a>
+        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+      </div>
+      
+      <div class="copyright">
+        <p>&copy; 2023 College Hub. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+<script>
+  // Debug function to log authentication status
+  async function debugAuthStatus() {
+    try {
+      const response = await fetch('/auth/status');
+      console.log('Auth status response:', response);
+      const data = await response.json();
+      console.log('Auth status data:', data);
+      return data;
+    } catch (error) {
+      console.error('Error checking auth status:', error);
+      return { authenticated: false };
+    }
+  }
+
+  // Check authentication status and update UI
+  async function checkAuthStatus() {
+    const authData = await debugAuthStatus();
+    
+    if (authData.authenticated && authData.user) {
+      // Show user dropdown with name
+      const userDropdown = document.getElementById('userDropdown');
+      const usernameElement = document.getElementById('username');
+      
+      // Display user's name or email if name not available
+      usernameElement.textContent = authData.user.name || authData.user.email.split('@')[0];
+      userDropdown.style.display = 'inline-block';
+    } else {
+      // Redirect to login if not authenticated
+      console.log('Not authenticated, redirecting to login');
+      window.location.href = '/login';
+    }
+  }
+
+  // Enhanced logout function with debugging
+  async function handleLogout() {
+    console.log('Logout initiated');
+    
+    try {
+      // First try POST request
+      let response = await fetch('/auth/logout', { 
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      // If POST fails, try GET as fallback
+      if (!response.ok) {
+        console.warn('POST logout failed, trying GET');
+        response = await fetch('/auth/logout', {
+          method: 'GET',
+          credentials: 'same-origin'
+        });
+      }
+
+      if (response.ok) {
+        console.log('Logout successful');
+        // Clear client-side storage
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        // Add cache-busting parameter to ensure fresh page load
+        const cacheBuster = '?logout=' + Date.now();
+        window.location.href = '/login' + cacheBuster;
+      } else {
+        console.error('Logout failed with status:', response.status);
+        console.error('Response:', await response.text());
+        window.location.href = '/login?error=logout_failed';
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      window.location.href = '/login?error=logout_error';
+    }
+  }
+
+  // Set up event listeners
+  document.addEventListener('DOMContentLoaded', function() {
+    // Check auth status when page loads
+    checkAuthStatus();
+    
+    // Attach logout handler
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        handleLogout();
+      });
+    } else {
+      console.error('Logout button not found');
+    }
+  });
+
+  // Additional check when page gains focus (helps with session changes in other tabs)
+  window.addEventListener('focus', checkAuthStatus);
+</script>
+
+</body>
+</html>

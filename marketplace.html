@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TICKET SALE | College Hub</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    /* ===== Base Styles ===== */
+    :root {
+      --primary: #315e7d;
+      --primary-light: #4a90e2;
+      --secondary: #667eea;
+      --accent: #764ba2;
+      --danger: #dc3545;
+      --light: #f4f7fa;
+      --white: #ffffff;
+      --gray: #6c757d;
+      --dark: #333;
+      --border-radius: 8px;
+      --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      --transition: all 0.3s ease;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: var(--light);
+      color: var(--dark);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ===== Typography ===== */
+    h1, h2, h3, h4 {
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    /* ===== Header & Navigation ===== */
+    .header {
+      background: var(--white);
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .nav-logo a {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--primary);
+      text-decoration: none;
+      transition: var(--transition);
+    }
+
+    .nav-logo a:hover {
+      color: var(--primary-light);
+    }
+
+    .nav-menu {
+      display: flex;
+      list-style: none;
+      gap: 1.5rem;
+    }
+
+    .nav-link {
+      color: var(--dark);
+      text-decoration: none;
+      font-weight: 600;
+      transition: var(--transition);
+      padding: 0.5rem 0;
+      position: relative;
+    }
+
+    .nav-link:hover {
+      color: var(--primary-light);
+    }
+
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: var(--primary-light);
+      transition: var(--transition);
+    }
+
+    .nav-link:hover::after {
+      width: 100%;
+    }
+
+    .nav-auth {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .auth-btn {
+      padding: 0.6rem 1.2rem;
+      border-radius: var(--border-radius);
+      font-weight: 600;
+      transition: var(--transition);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .login-btn {
+      background-color: rgba(74, 144, 226, 0.1);
+      color: var(--primary);
+      border: 1px solid var(--primary-light);
+    }
+
+    .login-btn:hover {
+      background-color: rgba(74, 144, 226, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .logout-btn {
+      background-color: transparent;
+      color: var(--danger);
+      border: 1px solid var(--danger);
+    }
+
+    .logout-btn:hover {
+      background-color: var(--danger);
+      color: var(--white);
+      transform: translateY(-2px);
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .user-email {
+      color: var(--primary);
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    /* ===== Hero Banner ===== */
+    .welcome-banner {
+      background: linear-gradient(135deg, var(--secondary) 0%, var(--accent) 100%);
+      color: var(--white);
+      padding: 1.5rem;
+      text-align: center;
+      font-size: 1.1rem;
+      font-weight: 500;
+      box-shadow: var(--shadow);
+    }
+
+    .sell-item {
+      padding: 24px;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      margin: 20px;
+      background-color: #f9f9f9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      max-width: 300px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .sell-item:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .sell-item img {
+      max-width: 100%;
+      max-height: 150px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+
+    .empty-state img {
+      width: 100px;
+      margin-bottom: 16px;
+    }
+
+    .empty-state h3 {
+      margin: 0;
+      font-size: 1.25rem;
+      color: #333;
+      font-weight: 600;
+    }
+
+    .empty-state p {
+      color: #777;
+      margin-top: 8px;
+      font-size: 0.95rem;
+    }
+
+    .sell {
+      text-align: center;
+      padding: 30px 20px;
+    }
+
+    .sell h2 {
+      font-size: 2rem;
+      color: #315e7d;
+      margin-bottom: 20px;
+      font-weight: 700;
+    }
+
+    .toggle-form-container {
+      text-align: center;
+      margin: 30px 0;
+    }
+
+    .btn-primary {
+      background-color: #315e7d;
+      color: #ffffff;
+      border: none;
+      padding: 12px 24px;
+      font-size: 1.1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    .btn-primary:hover {
+      background-color: #4a90e2;
+      transform: translateY(-2px);
+    }
+
+    .sell-form {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      display: none;
+    }
+
+    .sell-form h2 {
+      font-size: 1.8rem;
+      color: #315e7d;
+      margin-bottom: 20px;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 5px;
+      font-size: 0.95rem;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select,
+    .form-group input[type="file"] {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ced4da;
+      border-radius: 5px;
+      font-size: 1rem;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus,
+    .form-group input[type="file"]:focus {
+      border-color: #4a90e2;
+      box-shadow: 0 0 8px rgba(74, 144, 226, 0.2);
+      outline: none;
+    }
+
+    .form-group select {
+      appearance: none;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24"><path fill="%23333" d="M7 10l5 5 5-5z"/></svg>') no-repeat right 10px center;
+      background-size: 12px;
+    }
+
+    .login-prompt {
+      text-align: center;
+      padding: 2.5rem;
+      background: #f8f9fa;
+      border: 1px solid #e0e7ff;
+      border-radius: 10px;
+      margin: 2rem auto;
+      max-width: 600px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .login-prompt h3 {
+      color: #315e7d;
+      margin-bottom: 1.2rem;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .login-prompt p {
+      color: #6c757d;
+      margin-bottom: 1.8rem;
+      font-size: 1rem;
+    }
+
+    .login-prompt .btn-primary {
+      background: #4a90e2;
+      color: #ffffff;
+      padding: 0.8rem 1.8rem;
+      border: none;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: background 0.3s ease, transform 0.2s ease;
+    }
+
+    .login-prompt .btn-primary:hover {
+      background: #315e7d;
+      transform: translateY(-2px);
+    }
+
+    .main-footer {
+      background-color: #315e7d;
+      color: #ffffff;
+      padding: 40px 20px;
+      margin-top: 40px;
+    }
+
+    .footer-content {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .footer-column {
+      flex: 1;
+      min-width: 200px;
+      margin: 10px;
+    }
+
+    .footer-column h3 {
+      font-size: 1.5rem;
+      margin-bottom: 15px;
+      font-weight: 600;
+    }
+
+    .footer-column p,
+    .footer-column ul li {
+      font-size: 1rem;
+      margin-bottom: 10px;
+    }
+
+    .footer-column ul {
+      list-style: none;
+    }
+
+    .footer-column ul li a {
+      color: #e0e7ff;
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+
+    .footer-column ul li a:hover {
+      color: #4a90e2;
+    }
+
+    .social-links a {
+      color: #ffffff;
+      margin-right: 15px;
+      font-size: 1.2rem;
+      transition: color 0.3s ease;
+    }
+
+    .social-links a:hover {
+      color: #4a90e2;
+    }
+
+    .copyright {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 0.9rem;
+      color: #e0e7ff;
+    }
+
+    @media (max-width: 768px) {
+      .main-nav ul {
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .login-container {
+        position: static;
+        transform: none;
+        margin-top: 10px;
+        text-align: center;
+      }
+
+      .footer-content {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .sell-item {
+        max-width: 100%;
+      }
+
+      .welcome-banner {
+        padding: 1rem;
+        font-size: 1rem;
+      }
+
+      .login-prompt {
+        padding: 1.5rem;
+        margin: 1.5rem 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <a href="/index.html">Campus Hub</a>
+            </div>
+            
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="/index.html" class="nav-link">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/lost-found.html" class="nav-link">Lost & Found</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/marketplace.html" class="nav-link">Marketplace</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/exams.html" class="nav-link">Exam Papers</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/announcements.html" class="nav-link">Announcements</a>
+                </li>
+                <li class="nav-item">
+              <a href="/dashboard.html" class="dashboard-btn">Dashboard</a></li>
+            </ul>
+          
+  
+
+
+            <!-- Authentication UI -->
+            <div class="nav-auth">
+                <!-- Show when NOT logged in -->
+                <a href="/login.html" id="loginBtn" class="auth-btn login-btn">Login</a>
+                
+                <!-- Show when logged in -->
+                <div id="userInfo" class="user-info" style="display: none;">
+                    <span id="userEmail" class="user-email"></span>
+                    <button id="logoutBtn" class="auth-btn logout-btn" style="display: none;">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Welcome message -->
+    <div class="welcome-banner">
+        <div id="welcomeMessage">Loading...</div>
+    </div>
+</header>
+<div class="login-prompt" style="display: none;">
+        <h3>Please Login to Continue</h3>
+        <p>You need to be logged in with your NITC email to access this feature.</p>
+        <a href="/login.html" class="btn-primary">Login with Google</a>
+    </div>
+
+  <div class="sell">
+    <h2>Recent Items</h2>
+    <div id="sellcontainer" style="display: flex; flex-wrap: wrap; justify-content: center;">
+      <div class="empty-state">
+        <img src="https://cdn-icons-png.flaticon.com/512/4076/4076478.png" alt="No items found">
+        <h3>No items found</h3>
+        <p>Use the form below to add one!</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="toggle-form-container">
+    <button id="toggleFormBtn" class="btn-primary">
+      <i class="fas fa-plus-circle"></i> Sell an Item
+    </button>
+  </div>
+
+  <div id="sellForm" class="sell-form">
+    <h2>Sell an Item</h2>
+    <form id="itemForm" enctype="multipart/form-data">
+      <div class="form-group">
+        <label for="itemName">Item Name:</label>
+        <input type="text" id="itemName" name="itemName" required>
+      </div>
+      <div class="form-group">
+        <label for="itemDescription">Description:</label>
+        <textarea id="itemDescription" name="itemDescription" required rows="4"></textarea>
+      </div>
+      <div class="form-group">
+        <label for="itemPrice">Price:</label>
+        <input type="number" id="itemPrice" name="itemPrice" required min="0" step="0.01">
+      </div>
+      <div class="form-group">
+        <label for="contact">Contact:</label>
+        <input type="text" id="contact" name="contact" required>
+      </div>
+      <div class="form-group">
+        <label for="details">Details:</label>
+        <input type="text" id="details" name="details" required>
+      </div>
+      <div class="form-group">
+        <label for="itemCategory">Category:</label>
+        <select id="itemCategory" name="itemCategory" required>
+          <option value="" disabled selected>Select a category</option>
+          <option value="electronics">Electronics</option>
+          <option value="books">Books</option>
+          <option value="furniture">Furniture</option>
+          <option value="ticket">Ticket</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="image">Image:</label>
+        <input type="file" id="image" name="image" accept="image/jpeg,image/png">
+      </div>
+      <button type="submit" class="btn-primary">Submit Item</button>
+    </form>
+  </div>
+
+  <footer class="main-footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-column">
+          <h3>College Hub</h3>
+          <p>Your one-stop platform for all campus needs and services.</p>
+          <div class="social-links">
+            <a href="#"><i class="fab fa-facebook-f"></i></a>
+            <a href="#"><i class="fab fa-twitter"></i></a>
+            <a href="#"><i class="fab fa-instagram"></i></a>
+          </div>
+        </div>
+        <div class="footer-column">
+          <h3>Quick Links</h3>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="lost-found.html">Lost & Found</a></li>
+            <li><a href="exams.html">Exam Papers</a></li>
+            <li><a href="announcements.html">Announcements</a></li>
+          </ul>
+        </div>
+        <div class="footer-column">
+          <h3>Contact</h3>
+          <ul>
+            <li><i class="fas fa-envelope"></i> help@collegehub.edu</li>
+            <li><i class="fas fa-phone"></i> (123) 456-7890</li>
+            <li><i class="fas fa-map-marker-alt"></i> Campus Center, Room 101</li>
+          </ul>
+        </div>
+      </div>
+      <div class="copyright">
+        <p>© 2025 College Hub. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+
+const API_BASE_URL = 'http://localhost:3000/api';
+const sellContainer = document.getElementById('sellcontainer');
+const itemForm = document.getElementById('itemForm');
+
+async function fetchItems() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/marketplace`);
+    if (!res.ok) throw new Error('Failed to fetch items');
+    const items = await res.json();
+
+    if (items.length === 0) {
+      sellContainer.innerHTML = `
+        <div class="empty-state">
+          <img src="https://cdn-icons-png.flaticon.com/512/4076/4076478.png" alt="No items found">
+          <h3>No items found</h3>
+          <p>Use the form below to add one!</p>
+        </div>
+      `;
+      return;
+    }
+
+    sellContainer.innerHTML = '';
+    items.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'sell-item';
+      card.innerHTML = `
+        ${item.imageUrl ? `<img src="${item.imageUrl}" alt="${item.itemName}">` : ''}
+        <h3>${item.itemName}</h3>
+        <p><strong>Price:</strong> ₹${item.itemPrice.toFixed(2)}</p>
+        <p>${item.itemDescription}</p>
+        <p><strong>Details:</strong> ${item.details}</p>
+        <p><strong>Category:</strong> ${item.itemCategory}</p>
+        <p><strong>Contact:</strong> ${item.contact}</p>
+        <p><strong>Posted by:</strong> ${item.postedByEmail}</p>
+      `;
+      sellContainer.appendChild(card);
+    });
+  } catch (err) {
+    console.error('Error fetching items:', err);
+    sellContainer.innerHTML = `<p style="color:red;">Failed to load items: ${err.message}</p>`;
+  }
+}
+
+document.getElementById('toggleFormBtn').addEventListener('click', () => {
+  const form = document.getElementById('sellForm');
+  form.style.display = form.style.display === 'block' ? 'none' : 'block';
+});
+
+itemForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const formData = new FormData(itemForm);
+
+  // Get logged in user
+  const user = window.getCurrentUser();
+  if (!user || !user._id || !user.email) {
+    alert('Please log in before submitting an item.');
+    window.location.href = '/login.html';
+    return;
+  }
+
+  // Append user details
+  formData.append('postedBy', user._id);
+  formData.append('postedByEmail', user.email);
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/marketplace`, {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.error || 'Failed to submit item');
+    }
+
+    alert('Item submitted successfully!');
+    itemForm.reset();
+    document.getElementById('sellForm').style.display = 'none';
+    fetchItems();
+  } catch (err) {
+    console.error('Error submitting item:', err);
+    alert(`Error submitting item: ${err.message}`);
+  }
+});
+
+window.addEventListener('DOMContentLoaded', fetchItems);
+</script>
+<script src="/auth-check.js"></script>
+
+
+</body>
+</html>

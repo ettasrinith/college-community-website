@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Hub - Announcements</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        /* Main Content Styles */
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        /* Announcements Section */
+        .announcements-container {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+        .section-title {
+            font-size: 2rem;
+            color: #2c3e50;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 0.5rem;
+        }
+        /* Announcement Form */
+        .announcement-form {
+            background-color: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            display: none; /* Hidden by default, shown only for admins */
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        .form-control:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .btn:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        /* Announcements List */
+        .announcements-list {
+            display: grid;
+            gap: 1.5rem;
+        }
+        .announcement-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            border-left: 4px solid #3498db;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .announcement-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        .announcement-title {
+            font-size: 1.25rem;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+        .announcement-meta {
+            display: flex;
+            justify-content: space-between;
+            color: #7f8c8d;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+        .announcement-content {
+            color: #34495e;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+        .announcement-file {
+            display: inline-block;
+            margin-top: 1rem;
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .announcement-file:hover {
+            text-decoration: underline;
+        }
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 1rem;
+            }
+            .announcement-meta {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+        .loading-message, .no-announcements {
+            text-align: center;
+            padding: 2rem;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+        .error-message {
+            text-align: center;
+            padding: 2rem;
+            color: #e74c3c;
+        }
+        .error-message .btn {
+            margin-top: 1rem;
+            background-color: #e74c3c;
+        }
+        .error-message .btn:hover {
+            background-color: #c0392b;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-logo">
+                    <a href="/index.html">Campus Hub</a>
+                </div>
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a href="/index.html" class="nav-link">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/lost-found.html" class="nav-link">Lost & Found</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/marketplace.html" class="nav-link">Marketplace</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/exams.html" class="nav-link">Exam Papers</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/announcements.html" class="nav-link">Announcements</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/dashboard.html" class="dashboard-btn">Dashboard</a>
+                    </li>
+                </ul>
+                <div class="nav-auth">
+                    <!-- Show when NOT logged in -->
+                    <a href="/login.html" id="loginBtn" class="auth-btn login-btn">Login</a>
+
+                    <!-- Show when logged in -->
+                    <div id="userInfo" class="user-info" style="display: none;">
+                        <span id="userEmail" class="user-email"></span>
+                        <button id="logoutBtn" class="auth-btn logout-btn">Logout</button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <main class="main-content">
+        <div class="announcements-container">
+            <h1 class="section-title">Announcements</h1>
+            <!-- Announcement Form (Visible to Admins only) -->
+            <form id="announcementForm" class="announcement-form">
+                <div class="form-group">
+                    <label for="title">Title</label>
+                    <input type="text" id="title" name="title" class="form-control" placeholder="Enter announcement title" required>
+                </div>
+                <div class="form-group">
+                    <label for="content">Content</label>
+                    <textarea id="content" name="content" class="form-control" placeholder="Enter announcement details"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="postedByName">Your Name</label>
+                    <input type="text" id="postedByName" name="postedByName" class="form-control" placeholder="Enter your name" required>
+                </div>
+                <div class="form-group">
+                    <label for="file">Attachment (PDF or Image)</label>
+                    <input type="file" id="file" name="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.gif">
+                </div>
+                <input type="hidden" id="postedByEmail" name="postedByEmail">
+                <button type="submit" class="btn">Post Announcement</button>
+            </form>
+            <!-- Announcements List -->
+            <div id="announcements" class="announcements-list">
+                <div class="loading-message">Loading announcements...</div>
+            </div>
+        </div>
+    </main>
+    <!-- Load auth.js script -->
+    <script src="auth-check.js"></script>
+    <script>
+        // Function to update header based on auth status
+        async function updateHeaderAuth() {
+            try {
+                const response = await fetch('/auth/status');
+                const data = await response.json();
+
+                const loginBtn = document.getElementById('loginBtn');
+                const userInfo = document.getElementById('userInfo');
+                const userEmailSpan = document.getElementById('userEmail');
+                const logoutBtn = document.getElementById('logoutBtn');
+
+                if (data.authenticated && data.user) {
+                    // User is logged in
+                    loginBtn.style.display = 'none';
+                    userInfo.style.display = 'flex'; // Assuming your CSS uses flex for .user-info
+                    userEmailSpan.textContent = data.user.email;
+
+                    // Populate form hidden field
+                    document.getElementById('postedByEmail').value = data.user.email;
+                    document.getElementById('postedByName').value = data.user.name || '';
+
+                } else {
+                    // User is not logged in
+                    loginBtn.style.display = 'block';
+                    userInfo.style.display = 'none';
+                    // Clear form fields if needed
+                    document.getElementById('postedByEmail').value = '';
+                    document.getElementById('postedByName').value = '';
+                }
+            } catch (error) {
+                console.error('Error checking auth status for header:', error);
+                // On error, assume not logged in or handle gracefully
+                document.getElementById('loginBtn').style.display = 'block';
+                document.getElementById('userInfo').style.display = 'none';
+            }
+        }
+
+        // Logout handler
+        function setupLogout() {
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    try {
+                        const response = await fetch('/auth/logout', {
+                            method: 'GET' // Or POST, depending on your route
+                        });
+                        if (response.ok) {
+                            // Update header immediately
+                            document.getElementById('loginBtn').style.display = 'block';
+                            document.getElementById('userInfo').style.display = 'none';
+                            // Redirect to login
+                            window.location.href = '/login.html';
+                        } else {
+                            console.error('Logout failed');
+                        }
+                    } catch (error) {
+                        console.error('Logout error:', error);
+                    }
+                });
+            }
+        }
+
+        // Check admin status and show form
+        async function checkAndShowAdminForm() {
+            try {
+                // Get current user email from the header state or fetch again
+                const emailSpan = document.getElementById('userEmail');
+                const userEmail = emailSpan ? emailSpan.textContent : null;
+
+                if (!userEmail) {
+                    // Not logged in or email not available yet
+                    document.getElementById('announcementForm').style.display = 'none';
+                    return;
+                }
+
+                // Fetch admin list
+                const response = await fetch('/config/admins.json');
+                if (!response.ok) {
+                    console.warn('Could not load admins list');
+                    document.getElementById('announcementForm').style.display = 'none';
+                    return;
+                }
+                const admins = await response.json();
+
+                if (admins.includes(userEmail)) {
+                    document.getElementById('announcementForm').style.display = 'block';
+                } else {
+                    document.getElementById('announcementForm').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error checking admin status:', error);
+                document.getElementById('announcementForm').style.display = 'none';
+            }
+        }
+
+
+        async function loadAnnouncements() {
+            const container = document.getElementById('announcements');
+            try {
+                const response = await fetch('/api/announcements');
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+                const announcements = await response.json();
+                container.innerHTML = '';
+                if (!announcements || announcements.length === 0) {
+                    container.innerHTML = '<div class="no-announcements">No announcements yet. Check back later!</div>';
+                    return;
+                }
+                announcements.forEach(announcement => {
+                    const announcementEl = document.createElement('div');
+                    announcementEl.className = 'announcement-card';
+                    const fileLink = announcement.fileUrl ?
+                        `<a href="${announcement.fileUrl}" class="announcement-file" target="_blank">View Attachment</a>` :
+                        '';
+                    announcementEl.innerHTML = `
+                        <h3 class="announcement-title">${announcement.title}</h3>
+                        <div class="announcement-meta">
+                            <span>Posted by: ${announcement.postedByName}</span>
+                            <span>${new Date(announcement.datePosted).toLocaleString()}</span>
+                        </div>
+                        <div class="announcement-content">${announcement.content || ''}</div>
+                        ${fileLink}
+                    `;
+                    container.appendChild(announcementEl);
+                });
+            } catch (error) {
+                console.error('Error loading announcements:', error);
+                container.innerHTML = `
+                    <div class="error-message">
+                        <p>Failed to load announcements.</p>
+                        <button onclick="loadAnnouncements()" class="btn">Try Again</button>
+                    </div>
+                `;
+            }
+        }
+
+        async function handleAnnouncementSubmit(e) {
+            e.preventDefault();
+            const form = e.target;
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.textContent;
+            try {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Posting...';
+                const formData = new FormData(form);
+                const response = await fetch('/api/announcements', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || 'Failed to post announcement');
+                }
+                form.reset();
+                // Reload announcements
+                await loadAnnouncements();
+                // Optionally, show success message
+                 alert('Announcement posted successfully!');
+            } catch (error) {
+                console.error('Error submitting announcement:', error);
+                alert(error.message || 'Failed to post announcement. Please try again.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalBtnText;
+            }
+        }
+
+        // Run on page load
+        document.addEventListener('DOMContentLoaded', async function () {
+             // 1. Update header authentication status
+            await updateHeaderAuth();
+
+            // 2. Setup logout button
+            setupLogout();
+
+            // 3. Load announcements for everyone
+            await loadAnnouncements();
+
+            // 4. Check if user is admin and show form
+            // We need to ensure the auth status is updated first
+            // A small delay or re-check might be needed if updateHeaderAuth is async
+            // Let's re-check admin status after initial auth update
+             setTimeout(checkAndShowAdminForm, 100); // Small delay to ensure DOM/email is updated
+
+            // 5. Attach form submit handler
+            document.getElementById('announcementForm').addEventListener('submit', handleAnnouncementSubmit);
+        });
+
+
+    </script>
+</body>
+</html>
