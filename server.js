@@ -12,8 +12,7 @@ const app = express();
 
 // MongoDB connection
 mongoose.connect(process.env.MONGODB_URI);
-.then(() => console.log('Connected to MongoDB'))
-.catch(err => console.error('MongoDB connection error:', err));
+
 
 // Ensure announce directories exist
 const announceDirs = ['announce', 'announce/pdfs', 'announce/images'];
