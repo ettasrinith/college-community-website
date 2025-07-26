@@ -11,25 +11,28 @@ class AuthManager {
         this.setupLogoutHandler();
     }
 
-    async checkAuthStatus() {
-        try {
-            const response = await fetch('/auth/status');
-            const data = await response.json();
-            
-            this.isAuthenticated = data.authenticated;
-            this.user = data.user;
-            
-            console.log('Auth status:', { 
-                authenticated: this.isAuthenticated, 
-                user: this.user 
-            });
-            
-        } catch (error) {
-            console.error('Failed to check auth status:', error);
-            this.isAuthenticated = false;
-            this.user = null;
-        }
+    // Just modify the checkAuthStatus method
+async checkAuthStatus() {
+    try {
+        const response = await fetch('/auth/status', {
+            credentials: 'include' // Add this line
+        });
+        const data = await response.json();
+        
+        this.isAuthenticated = data.authenticated;
+        this.user = data.user;
+        
+        console.log('Auth status:', { 
+            authenticated: this.isAuthenticated, 
+            user: this.user 
+        });
+        
+    } catch (error) {
+        console.error('Failed to check auth status:', error);
+        this.isAuthenticated = false;
+        this.user = null;
     }
+}
 
     updateUI() {
         // Update login/logout button
