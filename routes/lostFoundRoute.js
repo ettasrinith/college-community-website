@@ -33,7 +33,7 @@ const log = (message) => {
 const storage = new CloudinaryStorage({
     cloudinary,
     params: {
-        folder: 'college-community/lostfound',
+        folder: 'college-community/lostfound', // Single folder path
         allowed_formats: ['jpg', 'jpeg', 'png', 'pdf'],
         resource_type: 'auto',
     },
@@ -93,7 +93,11 @@ router.post('/', (req, res) => {
                 return res.status(400).json({ error: errorMsg });
             }
 
-            const imageFile = req.files.image ? req.files.image[0].path : null; // Use .path instead of .filename
+            // Use public_id from Cloudinary to construct the correct URL
+            const imageFile = req.files.image ? req.files.image[0].public_id : null;
+            const imageUrl = imageFile
+                ? `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/image/upload/${imageFile}${path.extname(req.files.image[0].originalname)}`
+                : null;
 
             const itemData = {
                 name,
@@ -102,7 +106,7 @@ router.post('/', (req, res) => {
                 contact,
                 type,
                 date: date || new Date(),
-                imageUrl: imageFile, // Store the full Cloudinary URL
+                imageUrl,
                 postedBy,
                 postedByEmail
             };
