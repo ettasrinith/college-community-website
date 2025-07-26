@@ -5,75 +5,46 @@ const fs = require('fs');
 const session = require('express-session');
 const passport = require('passport');
 const MongoStore = require('connect-mongo');
-const cloudinary = require('cloudinary').v2;
-const multer = require('multer');
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
 require('dotenv').config();
 
 // Initialize app
 const app = express();
 
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-  secure: true
-});
-
-// Create Cloudinary storage engine for all file types
-const cloudinaryStorage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: (req, file) => {
-      // Determine folder based on route
-      if (req.baseUrl.includes('papers')) return 'exam-papers';
-      if (req.baseUrl.includes('announcements')) return 'announcements';
-      if (req.baseUrl.includes('marketplace')) return 'marketplace';
-      if (req.baseUrl.includes('lostfound')) return 'lostfound';
-      return 'misc';
-    },
-    resource_type: 'auto', // Automatically detect resource type
-    allowed_formats: ['jpg', 'png', 'jpeg', 'gif', 'pdf', 'doc', 'docx'],
-    public_id: (req, file) => {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-      return `${path.parse(file.originalname).name}-${uniqueSuffix}`;
-    }
-  }
-});
-
-// Configure multer for Cloudinary uploads
-const upload = multer({ 
-  storage: cloudinaryStorage,
-  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
-});
-
 mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
 
-// Session configuration
+// Ensure announce directories exist
+const announceDirs = ['announce', 'announce/pdfs', 'announce/images'];
+announceDirs.forEach(dir => {
+    const dirPath = path.join(__dirname, dir);
+    if (!fs.existsSync(dirPath)) {
+        fs.mkdirSync(dirPath, { recursive: true });
+    }
+});
+
+// FIXED: Session configuration with proper settings
 app.use(session({
     secret: process.env.SESSION_SECRET || 'your_secret_key_change_this_in_production',
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({ 
         mongoUrl: process.env.MONGO_URI,
-        ttl: 14 * 24 * 60 * 60,
-        touchAfter: 24 * 3600
+        ttl: 14 * 24 * 60 * 60, // = 14 days
+        touchAfter: 24 * 3600 // lazy session update
     }),
     cookie: {
-        maxAge: 1000 * 60 * 60 * 24 * 7,
-        secure: process.env.NODE_ENV === 'production',
+        maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days (increased from 1 day)
+        secure: false, // FIXED: Set to false for development, true only for HTTPS in production
         httpOnly: true,
-        sameSite: 'lax'
+        sameSite: 'lax' // ADDED: Important for cross-site requests
     },
-    name: 'sessionId'
+    name: 'sessionId' // ADDED: Custom session name
 }));
 
 // Passport middleware
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Debug middleware
+// ADDED: Debug middleware to log session info
 app.use((req, res, next) => {
     console.log('Session Debug:', {
         sessionID: req.sessionID,
@@ -88,17 +59,20 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files (only for frontend assets)
+// Serve static files
 app.use(express.static(path.join(__dirname, '.')));
+app.use('/exampapers', express.static(path.join(__dirname, 'public/exampapers')));
+app.use('/sell/images', express.static(path.join(__dirname, 'sell/images')));
+app.use('/announce', express.static(path.join(__dirname, 'announce')));
 
 // Routes
 app.use('/auth', require('./routes/auth'));
 
-// Import routes with Cloudinary support
-const lostFoundRoute = require('./routes/lostFoundRoute')(upload);
-const examPaperRoute = require('./routes/examPaperRoute')(upload);
-const marketplaceRoute = require('./routes/marketplaceRoute')(upload);
-const announcementsRoute = require('./routes/announcementRoute')(upload);
+// Import other routes
+const lostFoundRoute = require('./routes/lostFoundRoute');
+const examPaperRoute = require('./routes/examPaperRoute');
+const marketplaceRoute = require('./routes/marketplaceRoute');
+const announcementsRoute = require('./routes/announcementRoute');
 
 app.use('/api/marketplace', marketplaceRoute);
 app.use('/api/lostfound', lostFoundRoute);
@@ -137,3 +111,9 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
 });
+
+// Ensure logs directory exists
+const logDir = path.join(__dirname, 'logs');
+if (!fs.existsSync(logDir)) {
+    fs.mkdirSync(logDir, { recursive: true });
+}
