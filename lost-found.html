@@ -794,210 +794,200 @@
   <script>
   
 document.addEventListener('DOMContentLoaded', function () {
-  const API_BASE_URL = 'http://localhost:3000/api/lostfound';
-  const formSection = document.getElementById('reportFormSection');
-  const toggleButton = document.getElementById('toggleFormBtn');
-  const fileInput = document.getElementById('image');
-  const itemsContainer = document.getElementById('lostItems');
-  const form = document.getElementById('itemForm');
+    const API_BASE_URL = 'https://college-community-website.onrender.com/api/lostfound';
+    const formSection = document.getElementById('reportFormSection');
+    const toggleButton = document.getElementById('toggleFormBtn');
+    const fileInput = document.getElementById('image');
+    const itemsContainer = document.getElementById('lostItems');
+    const form = document.getElementById('itemForm');
 
-  // Log element status for debugging
-  console.log("formSection:", formSection);
-  console.log("toggleButton:", toggleButton);
+    // Log element status for debugging
+    console.log("formSection:", formSection);
+    console.log("toggleButton:", toggleButton);
 
-  // === Toggle Form Visibility ===
-  if (toggleButton && formSection) {
-    toggleButton.addEventListener('click', function () {
-      const isVisible = formSection.style.display === 'block';
-      formSection.style.display = isVisible ? 'none' : 'block';
-      this.innerHTML = isVisible
-        ? '<i class="fas fa-plus-circle"></i> Report an Item'
-        : '<i class="fas fa-minus-circle"></i> Hide Form';
-    });
-  } else {
-    console.error("One or both elements not found: formSection or toggleButton");
-  }
-
-  // === File Input Display ===
-  if (fileInput) {
-    fileInput.addEventListener('change', function () {
-      const fileName = this.files[0]?.name || 'No file chosen';
-      const fileNameDisplay = document.querySelector('.file-name');
-      if (fileNameDisplay) {
-        fileNameDisplay.textContent = fileName;
-      }
-    });
-  }
-
-if (form) {
-  form.addEventListener('submit', async function (e) {
-    e.preventDefault();
-
-    // Check authentication first
-    if (!window.authManager.isLoggedIn()) {
-      showAlert('Please login to report items', 'error');
-      window.location.href = '/login.html';
-      return;
+    // Toggle Form Visibility
+    if (toggleButton && formSection) {
+        toggleButton.addEventListener('click', function () {
+            const isVisible = formSection.style.display === 'block';
+            formSection.style.display = isVisible ? 'none' : 'block';
+            this.innerHTML = isVisible
+                ? '<i class="fas fa-plus-circle"></i> Report an Item'
+                : '<i class="fas fa-minus-circle"></i> Hide Form';
+        });
+    } else {
+        console.error("One or both elements not found: formSection or toggleButton");
     }
 
-    const submitBtn = this.querySelector('button[type="submit"]');
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
-
-    // Get current user data safely
-    const user = window.authManager.getCurrentUser();
-    if (!user || !user._id || !user.email) {
-      showAlert('User information is missing. Please login again.', 'error');
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Report';
-      return;
+    // File Input Display
+    if (fileInput) {
+        fileInput.addEventListener('change', function () {
+            const fileName = this.files[0]?.name || 'No file chosen';
+            const fileNameDisplay = document.querySelector('.file-name');
+            if (fileNameDisplay) {
+                fileNameDisplay.textContent = fileName;
+            }
+        });
     }
 
-    // Create FormData and append form fields
-    const formData = new FormData(this);
-    formData.append('postedBy', user._id);
-    formData.append('postedByEmail', user.email);
+    if (form) {
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
 
-    // ✅ Debug formData entries
-    for (let pair of formData.entries()) {
-      console.log('[FormData]', pair[0] + ': ' + pair[1]);
+            // Check authentication
+            if (!window.authManager.isLoggedIn()) {
+                showAlert('Please login to report items', 'error');
+                window.location.href = '/login.html';
+                return;
+            }
+
+            const submitBtn = this.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+
+            const user = window.authManager.getCurrentUser();
+            if (!user || !user._id || !user.email) {
+                showAlert('User information is missing. Please login again.', 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Report';
+                return;
+            }
+
+            const formData = new FormData(this);
+            formData.append('postedBy', user._id);
+            formData.append('postedByEmail', user.email);
+
+            for (let pair of formData.entries()) {
+                console.log('[FormData]', pair[0] + ': ' + pair[1]);
+            }
+
+            try {
+                const response = await fetch(API_BASE_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Upload failed');
+                }
+
+                const result = await response.json();
+                console.log('[Upload Success]', result);
+                showAlert('Item submitted successfully!', 'success');
+                form.reset();
+                document.querySelector('.file-name').textContent = 'No file chosen';
+                loadItems();
+                formSection.style.display = 'none';
+                toggleButton.innerHTML = '<i class="fas fa-plus-circle"></i> Report an Item';
+            } catch (err) {
+                console.error('[Upload Error]', err);
+                showAlert(`Failed to submit item: ${err.message}`, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Report';
+            }
+        });
     }
 
-    try {
-      const response = await fetch(API_BASE_URL, {
-        method: 'POST',
-        body: formData // <✅ DO NOT manually set Content-Type
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Upload failed');
-      }
-
-      const result = await response.json();
-      console.log('[Upload Success]', result);
-      showAlert('Item submitted successfully!', 'success');
-      form.reset();
-      document.querySelector('.file-name').textContent = 'No file chosen';
-      loadItems();
-      formSection.style.display = 'none';
-      toggleButton.innerHTML = '<i class="fas fa-plus-circle"></i> Report an Item';
-
-    } catch (err) {
-      console.error('[Upload Error]', err);
-      showAlert(`Failed to submit item: ${err.message}`, 'error');
-    } finally {
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Report';
-    }
-  });
-}
-
-  // === Load Items from API ===
-  async function loadItems(filter = 'all') {
-    try {
-      itemsContainer.innerHTML = '<div class="loading">Loading items...</div>';
-      const res = await fetch(`${API_BASE_URL}`);
-      if (!res.ok) {
-        if (res.status === 404) {
-          throw new Error('Lost & Found API endpoint not found (404). Please ensure the backend server is running.');
-        } else {
-          throw new Error(`Failed to fetch items (HTTP ${res.status})`);
+    async function loadItems(filter = 'all') {
+        try {
+            itemsContainer.innerHTML = '<div class="loading">Loading items...</div>';
+            const res = await fetch(`${API_BASE_URL}`);
+            if (!res.ok) {
+                if (res.status === 404) {
+                    throw new Error('Lost & Found API endpoint not found (404). Please ensure the backend server is running.');
+                } else {
+                    throw new Error(`Failed to fetch items (HTTP ${res.status})`);
+                }
+            }
+            const items = await res.json();
+            console.log('[Loaded Items]', items.length);
+            renderItems(items, filter);
+        } catch (err) {
+            console.error('[Load Items Error]', err);
+            itemsContainer.innerHTML = `<div class="error">Error loading items: ${err.message}</div>`;
         }
-      }
-      const items = await res.json();
-      console.log('[Loaded Items]', items.length);
-      renderItems(items, filter);
-    } catch (err) {
-      console.error('[Load Items Error]', err);
-      itemsContainer.innerHTML = `<div class="error">Error loading items: ${err.message}</div>`;
-    }
-  }
-
-  // === Render Items to DOM ===
-  function renderItems(items, filter) {
-    if (!Array.isArray(items) || items.length === 0) {
-      itemsContainer.innerHTML = '<div class="no-items">No items found</div>';
-      return;
     }
 
-    const filteredItems = filter === 'all'
-      ? items
-      : items.filter(item => item.type === filter);
+    function renderItems(items, filter) {
+        if (!Array.isArray(items) || items.length === 0) {
+            itemsContainer.innerHTML = '<div class="no-items">No items found</div>';
+            return;
+        }
 
-    if (filteredItems.length === 0) {
-      itemsContainer.innerHTML = '<div class="no-items">No items match this filter</div>';
-      return;
+        const filteredItems = filter === 'all'
+            ? items
+            : items.filter(item => item.type === filter);
+
+        if (filteredItems.length === 0) {
+            itemsContainer.innerHTML = '<div class="no-items">No items match this filter</div>';
+            return;
+        }
+
+        itemsContainer.innerHTML = '';
+        filteredItems.forEach(item => {
+            const hasImage = typeof item.imageUrl === 'string' && item.imageUrl.trim() !== '';
+            const imageUrl = hasImage
+                ? item.imageUrl
+                : 'https://via.placeholder.com/300x200?text=No+Image';
+
+            const card = document.createElement('div');
+            card.className = 'item-card';
+            card.innerHTML = `
+                <div class="item-image">
+                    <img src="${imageUrl}" alt="${item.name}"
+                         onerror="this.onerror=null; this.src='https://via.placeholder.com/300x200?text=No+Image';" />
+                </div>
+                <div class="item-details">
+                    <span class="item-status ${item.type === 'lost' ? 'status-lost' : 'status-found'}">
+                        ${item.type === 'lost' ? 'Lost' : 'Found'}
+                    </span>
+                    <h3>${item.name}</h3>
+                    <div class="item-meta">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>${item.location}</span>
+                    </div>
+                    <div class="item-meta">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>${new Date(item.date).toLocaleDateString()}</span>
+                    </div>
+                    <p class="item-description">${item.description}</p>
+                    <div class="item-contact">
+                        <i class="fas fa-user"></i> Contact: ${item.contact}
+                    </div>
+                </div>
+            `;
+            itemsContainer.appendChild(card);
+        });
     }
 
-    itemsContainer.innerHTML = '';
-    filteredItems.forEach(item => {
-      const hasImage = typeof item.imageUrl === 'string' && item.imageUrl.trim() !== '';
-      const imageUrl = hasImage
-        ? `/uploads/images/${item.imageUrl}`
-        : 'https://via.placeholder.com/300x200?text=No+Image';
-
-      const card = document.createElement('div');
-      card.className = 'item-card';
-      card.innerHTML = `
-        <div class="item-image">
-          <img src="${imageUrl}" alt="${item.name}"
-               onerror="this.onerror=null; this.src='https://via.placeholder.com/300x200?text=No+Image';" />
-        </div>
-        <div class="item-details">
-          <span class="item-status ${item.type === 'lost' ? 'status-lost' : 'status-found'}">
-            ${item.type === 'lost' ? 'Lost' : 'Found'}
-          </span>
-          <h3>${item.name}</h3>
-          <div class="item-meta">
-            <i class="fas fa-map-marker-alt"></i>
-            <span>${item.location}</span>
-          </div>
-          <div class="item-meta">
-            <i class="fas fa-calendar-alt"></i>
-            <span>${new Date(item.date).toLocaleDateString()}</span>
-          </div>
-          <p class="item-description">${item.description}</p>
-          <div class="item-contact">
-            <i class="fas fa-user"></i> Contact: ${item.contact}
-          </div>
-        </div>
-      `;
-      itemsContainer.appendChild(card);
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            loadItems(btn.dataset.filter);
+        });
     });
-  }
 
-  // === Filter Buttons ===
-  document.querySelectorAll('.filter-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      loadItems(btn.dataset.filter);
-    });
-  });
+    function showAlert(message, type) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert ${type}`;
+        alertDiv.innerHTML = `
+            <span>${message}</span>
+            <button class="close-btn">&times;</button>
+        `;
+        document.body.appendChild(alertDiv);
+        setTimeout(() => {
+            alertDiv.classList.add('fade-out');
+            setTimeout(() => alertDiv.remove(), 300);
+        }, 5000);
+        alertDiv.querySelector('.close-btn').addEventListener('click', () => {
+            alertDiv.remove();
+        });
+    }
 
-  // === Show Alert Message ===
-  function showAlert(message, type) {
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert ${type}`;
-    alertDiv.innerHTML = `
-      <span>${message}</span>
-      <button class="close-btn">&times;</button>
-    `;
-    document.body.appendChild(alertDiv);
-    setTimeout(() => {
-      alertDiv.classList.add('fade-out');
-      setTimeout(() => alertDiv.remove(), 300);
-    }, 5000);
-    alertDiv.querySelector('.close-btn').addEventListener('click', () => {
-      alertDiv.remove();
-    });
-  }
-
-  // === Initial Load ===
-  loadItems();
+    loadItems();
 });
-
   </script>
 
 </body>
