@@ -93,8 +93,11 @@ router.post('/', (req, res) => {
                 return res.status(400).json({ error: errorMsg });
             }
 
-            // Use public_id from Cloudinary to construct the correct URL
-            const imageUrl = req.files.image ? req.files.image[0].path : null;
+            // Construct correct imageUrl using public_id
+            const imageFile = req.files.image ? req.files.image[0].public_id : null;
+            const imageUrl = imageFile
+                ? `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/image/upload/${imageFile}${path.extname(req.files.image[0].originalname)}`
+                : null;
 
             const itemData = {
                 name,
@@ -103,10 +106,11 @@ router.post('/', (req, res) => {
                 contact,
                 type,
                 date: date || new Date(),
-                imageUrl, // This will be the correct Cloudinary URL
+                imageUrl,
                 postedBy,
                 postedByEmail
             };
+
             const item = new LostItem(itemData);
             await item.save();
 
