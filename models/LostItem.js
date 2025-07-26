@@ -1,5 +1,5 @@
+// models/LostItem.js
 const mongoose = require('mongoose');
-
 
 const LostItemSchema = new mongoose.Schema({
   name: {
@@ -23,21 +23,29 @@ const LostItemSchema = new mongoose.Schema({
     required: true,
     enum: ['lost', 'found']
   },
-  imageUrl: String,
-  date: { 
-    type: Date, 
-    default: Date.now 
+  // Updated field name for clarity (still holds the full URL)
+  imageUrl: {
+    type: String,
+    required: false // Make it optional if no image is uploaded
   },
-   postedByEmail: {
+  // New field to store Cloudinary public ID for potential deletion
+  imagePublicId: {
+    type: String,
+    required: false
+  },
+  date: {
+    type: Date,
+    default: Date.now
+  },
+  postedByEmail: {
     type: String,
     required: true
   },
-postedBy: {
-  type: mongoose.Schema.Types.ObjectId, // ensure this matches format of _id
-  required: true,
-  ref: 'User'
-}
-
+  postedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: 'User'
+  }
 });
 
 module.exports = mongoose.model('LostItem', LostItemSchema);
