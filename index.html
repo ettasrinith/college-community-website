@@ -499,103 +499,79 @@
       </div>
     </div>
   </footer>
-<script>
-  // Debug function to log authentication status
-  async function debugAuthStatus() {
-    try {
-      const response = await fetch('/auth/status');
-      console.log('Auth status response:', response);
-      const data = await response.json();
-      console.log('Auth status data:', data);
-      return data;
-    } catch (error) {
-      console.error('Error checking auth status:', error);
-      return { authenticated: false };
-    }
-  }
+<script src="/auth-check.js"></script>
+    <script>
+        // Enhanced initialization with error handling
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                // Wait for AuthManager to be available
+                if (!window.authManager) {
+                    throw new Error('AuthManager not initialized');
+                }
 
-  // Check authentication status and update UI
-  async function checkAuthStatus() {
-    const authData = await debugAuthStatus();
-    
-    if (authData.authenticated && authData.user) {
-      // Show user dropdown with name
-      const userDropdown = document.getElementById('userDropdown');
-      const usernameElement = document.getElementById('username');
-      
-      // Display user's name or email if name not available
-      usernameElement.textContent = authData.user.name || authData.user.email.split('@')[0];
-      userDropdown.style.display = 'inline-block';
-    } else {
-      // Redirect to login if not authenticated
-      console.log('Not authenticated, redirecting to login');
-      window.location.href = '/login';
-    }
-  }
+                // First check auth status
+                await window.authManager.checkAuthStatus();
+                
+                // Debug logging
+                console.log('Auth status in index.html:', {
+                    isAuthenticated: window.authManager.isLoggedIn(),
+                    user: window.authManager.getCurrentUser(),
+                    path: window.location.pathname
+                });
 
-  // Enhanced logout function with debugging
-  async function handleLogout() {
-    console.log('Logout initiated');
-    
-    try {
-      // First try POST request
-      let response = await fetch('/auth/logout', { 
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+                // Redirect if not authenticated (except on login page)
+                if (!window.authManager.isLoggedIn() && !window.location.pathname.includes('login')) {
+                    console.log('Not authenticated, redirecting to login');
+                    window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.pathname);
+                    return;
+                }
 
-      // If POST fails, try GET as fallback
-      if (!response.ok) {
-        console.warn('POST logout failed, trying GET');
-        response = await fetch('/auth/logout', {
-          method: 'GET',
-          credentials: 'same-origin'
+                // Update UI
+                window.authManager.updateUI();
+
+                // Update username element with user's email
+                const usernameElement = document.getElementById('username');
+                if (usernameElement) {
+                    if (window.authManager.isLoggedIn() && window.authManager.getCurrentUser()) {
+                        usernameElement.textContent = window.authManager.getCurrentUser().email;
+                    } else {
+                        usernameElement.textContent = '';
+                    }
+                }
+
+            } catch (error) {
+                console.error('Authentication initialization error:', error);
+                if (!window.location.pathname.includes('login')) {
+                    window.location.href = '/login.html?error=auth_error';
+                }
+            }
         });
-      }
 
-      if (response.ok) {
-        console.log('Logout successful');
-        // Clear client-side storage
-        localStorage.clear();
-        sessionStorage.clear();
-        
-        // Add cache-busting parameter to ensure fresh page load
-        const cacheBuster = '?logout=' + Date.now();
-        window.location.href = '/login' + cacheBuster;
-      } else {
-        console.error('Logout failed with status:', response.status);
-        console.error('Response:', await response.text());
-        window.location.href = '/login?error=logout_failed';
-      }
-    } catch (error) {
-      console.error('Logout error:', error);
-      window.location.href = '/login?error=logout_error';
-    }
-  }
-
-  // Set up event listeners
-  document.addEventListener('DOMContentLoaded', function() {
-    // Check auth status when page loads
-    checkAuthStatus();
-    
-    // Attach logout handler
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) {
-      logoutBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        handleLogout();
-      });
-    } else {
-      console.error('Logout button not found');
-    }
-  });
-
-  // Additional check when page gains focus (helps with session changes in other tabs)
-  window.addEventListener('focus', checkAuthStatus);
-</script>
+        // Enhanced focus handler with debounce
+        let focusCheckTimeout;
+        window.addEventListener('focus', function() {
+            clearTimeout(focusCheckTimeout);
+            focusCheckTimeout = setTimeout(async () => {
+                if (window.authManager) {
+                    try {
+                        await window.authManager.checkAuthStatus();
+                        window.authManager.updateUI();
+                        // Update username element with user's email
+                        const usernameElement = document.getElementById('username');
+                        if (usernameElement) {
+                            if (window.authManager.isLoggedIn() && window.authManager.getCurrentUser()) {
+                                usernameElement.textContent = window.authManager.getCurrentUser().email;
+                            } else {
+                                usernameElement.textContent = '';
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Focus check error:', error);
+                    }
+                }
+            }, 100);
+        });
+    </script>
 
 </body>
 </html>
