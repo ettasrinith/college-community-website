@@ -23,21 +23,36 @@ announceDirs.forEach(dir => {
     }
 });
 
-// Session configuration
+// Update just your session configuration
 app.use(session({
     secret: process.env.SESSION_SECRET || 'your_secret_key',
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({ 
-        mongoUrl:  process.env.MONGO_URI,
-        ttl: 14 * 24 * 60 * 60 // = 14 days
+        mongoUrl: process.env.MONGO_URI,
+        ttl: 14 * 24 * 60 * 60
     }),
     cookie: {
         maxAge: 1000 * 60 * 60 * 24, // 1 day
         secure: process.env.NODE_ENV === 'production',
-        httpOnly: true
+        httpOnly: true,
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax' // Add this line
     }
 }));
+
+// Add CORS support right after session middleware
+app.use((req, res, next) => {
+    const allowedOrigins = process.env.NODE_ENV === 'production'
+        ? ['https://college-community-website.onrender.com']
+        : ['http://localhost:3000'];
+    
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    next();
+});
 
 // Passport middleware
 app.use(passport.initialize());
