@@ -792,7 +792,6 @@
   </footer>
   <script src="/auth-check.js"></script>
   <script>
-  
 document.addEventListener('DOMContentLoaded', function () {
     const API_BASE_URL = 'https://college-community-website.onrender.com/api/lostfound';
     const formSection = document.getElementById('reportFormSection');
@@ -901,7 +900,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
             const items = await res.json();
-            console.log('[Loaded Items]', items.length);
+            console.log('[Loaded Items]', items.length, items);
             renderItems(items, filter);
         } catch (err) {
             console.error('[Load Items Error]', err);
@@ -926,7 +925,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         itemsContainer.innerHTML = '';
         filteredItems.forEach(item => {
-            const hasImage = typeof item.imageUrl === 'string' && item.imageUrl.trim() !== '';
+            const hasImage = typeof item.imageUrl === 'string' && item.imageUrl.trim() !== '' && !item.imageUrl.endsWith('.pdf');
+            console.log('[Render Item]', { id: item._id, name: item.name, imageUrl: item.imageUrl, hasImage }); // Debug log
             const imageUrl = hasImage
                 ? item.imageUrl
                 : 'https://via.placeholder.com/300x200?text=No+Image';
@@ -935,8 +935,10 @@ document.addEventListener('DOMContentLoaded', function () {
             card.className = 'item-card';
             card.innerHTML = `
                 <div class="item-image">
-                    <img src="${imageUrl}" alt="${item.name}"
-                         onerror="this.onerror=null; this.src='https://via.placeholder.com/300x200?text=No+Image';" />
+                    ${hasImage ? 
+                        `<img src="${imageUrl}" alt="${item.name}" onerror="this.onerror=null; this.src='https://via.placeholder.com/300x200?text=No+Image';" />` :
+                        `<div class="no-image">PDF or No Image</div>`
+                    }
                 </div>
                 <div class="item-details">
                     <span class="item-status ${item.type === 'lost' ? 'status-lost' : 'status-found'}">
