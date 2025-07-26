@@ -10,11 +10,10 @@ passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
   callbackURL: process.env.GOOGLE_CALLBACK_URL
-}, async (req, accessToken, refreshToken, profile, done) => {
+}, async (accessToken, refreshToken, profile, done) => { // REMOVED req parameter
     try {
         const email = profile.emails[0].value;
         console.log('Google OAuth attempt:', email);
-
 
         let user = await User.findOne({ 
             $or: [
@@ -39,24 +38,28 @@ passport.use(new GoogleStrategy({
             console.log('Existing user found:', email);
         }
 
+        console.log('OAuth success for user:', user.email); // ADDED: Better logging
         return done(null, user);
     } catch (err) {
         console.error('OAuth error:', err);
-        return done(err);
+        return done(err, null);
     }
 }));
 
-// Serialization
+// FIXED: Serialization with better error handling
 passport.serializeUser((user, done) => {
-    done(null, user.id);
+    console.log('Serializing user:', user.email);
+    done(null, user._id); // Use _id instead of id for MongoDB
 });
 
 passport.deserializeUser(async (id, done) => {
     try {
         const user = await User.findById(id);
+        console.log('Deserializing user:', user ? user.email : 'not found');
         done(null, user);
     } catch (err) {
-        done(err);
+        console.error('Deserialization error:', err);
+        done(err, null);
     }
 });
 
@@ -69,34 +72,62 @@ router.get('/google', passport.authenticate('google', {
 router.get('/google/callback',
     passport.authenticate('google', {
         failureRedirect: '/login?error=auth_failed',
-        failureFlash: true
+        failureFlash: false // CHANGED: Set to false to avoid issues
     }),
     (req, res) => {
-        console.log('OAuth success, redirecting to index.html');
-        // Successful authentication, redirect to index.html
-        res.redirect('/index.html');
+        console.log('OAuth callback success for user:', req.user.email);
+        console.log('Session after OAuth:', req.sessionID);
+        
+        // ADDED: Ensure session is saved before redirect
+        req.session.save((err) => {
+            if (err) {
+                console.error('Session save error:', err);
+                return res.redirect('/login?error=session_error');
+            }
+            console.log('Session saved, redirecting to index.html');
+            res.redirect('/index.html');
+        });
     }
 );
 
 router.get('/logout', (req, res) => {
+    const userEmail = req.user ? req.user.email : 'unknown';
+    console.log('Logout attempt for user:', userEmail);
+    
     req.logout((err) => {
         if (err) {
             console.error('Logout error:', err);
-            return res.redirect('/');
+            return res.status(500).json({ error: 'Logout failed' });
         }
-        req.session.destroy(() => {
-            console.log('User logged out');
+        
+        req.session.destroy((err) => {
+            if (err) {
+                console.error('Session destroy error:', err);
+                return res.status(500).json({ error: 'Session destroy failed' });
+            }
+            
+            console.log('User logged out successfully:', userEmail);
+            res.clearCookie('sessionId'); // Clear the session cookie
             res.redirect('/login');
         });
     });
 });
 
-// Check authentication status
+// ENHANCED: Check authentication status with better logging
 router.get('/status', (req, res) => {
-    res.json({ 
+    const authStatus = {
         authenticated: req.isAuthenticated(),
-        user: req.user 
+        user: req.user || null,
+        sessionID: req.sessionID
+    };
+    
+    console.log('Auth status check:', {
+        authenticated: authStatus.authenticated,
+        userEmail: authStatus.user ? authStatus.user.email : 'none',
+        sessionID: authStatus.sessionID
     });
+    
+    res.json(authStatus);
 });
 
 module.exports = router;

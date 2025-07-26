@@ -12,8 +12,6 @@ const app = express();
 
 mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
 
-
-
 // Ensure announce directories exist
 const announceDirs = ['announce', 'announce/pdfs', 'announce/images'];
 announceDirs.forEach(dir => {
@@ -23,25 +21,39 @@ announceDirs.forEach(dir => {
     }
 });
 
-// Session configuration
+// FIXED: Session configuration with proper settings
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'your_secret_key',
+    secret: process.env.SESSION_SECRET || 'your_secret_key_change_this_in_production',
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({ 
-        mongoUrl:  process.env.MONGO_URI,
-        ttl: 14 * 24 * 60 * 60 // = 14 days
+        mongoUrl: process.env.MONGO_URI,
+        ttl: 14 * 24 * 60 * 60, // = 14 days
+        touchAfter: 24 * 3600 // lazy session update
     }),
     cookie: {
-        maxAge: 1000 * 60 * 60 * 24, // 1 day
-        secure: process.env.NODE_ENV === 'production',
-        httpOnly: true
-    }
+        maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days (increased from 1 day)
+        secure: false, // FIXED: Set to false for development, true only for HTTPS in production
+        httpOnly: true,
+        sameSite: 'lax' // ADDED: Important for cross-site requests
+    },
+    name: 'sessionId' // ADDED: Custom session name
 }));
 
 // Passport middleware
 app.use(passport.initialize());
 app.use(passport.session());
+
+// ADDED: Debug middleware to log session info
+app.use((req, res, next) => {
+    console.log('Session Debug:', {
+        sessionID: req.sessionID,
+        authenticated: req.isAuthenticated(),
+        user: req.user ? req.user.email : 'none',
+        path: req.path
+    });
+    next();
+});
 
 // Middleware
 app.use(express.json());
