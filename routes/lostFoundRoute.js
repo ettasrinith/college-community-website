@@ -35,11 +35,11 @@ const storage = new CloudinaryStorage({
     params: {
         folder: 'college-community/lostfound', // Single folder path
         allowed_formats: ['jpg', 'jpeg', 'png', 'pdf'],
-        resource_type: 'auto',
+        resource_type: 'auto', // 'auto' handles images and 'raw' files like PDFs
     },
 });
 
-const upload = multer({ 
+const upload = multer({
     storage,
     fileFilter: (req, file, cb) => {
         const filetypes = /jpeg|jpg|png|pdf/;
@@ -73,7 +73,8 @@ router.post('/', (req, res) => {
         }
 
         console.log('[DEBUG] Request body:', req.body);
-        console.log('[DEBUG] Files:', req.files);
+        // Log the actual structure provided by multer-storage-cloudinary
+        console.log('[DEBUG] Cloudinary File Object (req.files.image[0]):', req.files?.image?.[0] || 'No image uploaded');
 
         try {
             const {
@@ -93,11 +94,20 @@ router.post('/', (req, res) => {
                 return res.status(400).json({ error: errorMsg });
             }
 
-            // Construct correct imageUrl using public_id
-            const imageFile = req.files.image ? req.files.image[0].public_id : null;
-            const imageUrl = imageFile
-                ? `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/image/upload/${imageFile}${path.extname(req.files.image[0].originalname)}`
-                : null;
+            // --- FIX: Use the URL provided by Cloudinary/Multer ---
+            // req.files.image[0].path is the full, secure URL provided by Cloudinary
+            let imageUrl = null;
+            let imagePublicId = null; // Store public_id for potential deletion
+
+            if (req.files && req.files.image && req.files.image[0]) {
+                 const cloudinaryFile = req.files.image[0];
+                 imageUrl = cloudinaryFile.path || cloudinaryFile.secure_url; // Use path or secure_url (both should work)
+                 imagePublicId = cloudinaryFile.filename; // Cloudinary storage usually puts the public_id here
+                 // Alternative if filename isn't the public_id: imagePublicId = cloudinaryFile.public_id;
+                 // Log for verification
+                 log(`[Cloudinary Upload Success] Public ID: ${imagePublicId}, URL: ${imageUrl}`);
+            }
+            // --- End FIX ---
 
             const itemData = {
                 name,
@@ -106,14 +116,15 @@ router.post('/', (req, res) => {
                 contact,
                 type,
                 date: date || new Date(),
-                imageUrl,
+                imageUrl, // Use the full Cloudinary URL
+                imagePublicId, // Store public_id for deletion (optional but recommended)
                 postedBy,
                 postedByEmail
             };
 
             const item = new LostItem(itemData);
             await item.save();
-
+            // Update log message to reflect the full URL
             log(`[Item Saved] ID: ${item._id}, PostedBy: ${postedBy}, ImageUrl: ${item.imageUrl}`);
             res.status(201).json(item);
 
@@ -128,7 +139,7 @@ router.post('/', (req, res) => {
 router.get('/', async (req, res) => {
     console.log('[DEBUG] GET / route hit');
     log('[DEBUG] GET / route hit');
-    
+
     try {
         const items = await LostItem.find().sort({ date: -1 });
         log(`[Items Fetched] Count: ${items.length}`);
@@ -152,27 +163,58 @@ router.get('/user/:email', async (req, res) => {
 
 // DELETE an item (only allowed by owner)
 router.delete('/:id', async (req, res) => {
+    // Ensure req.user exists and is authenticated (middleware should handle this)
+    if (!req.user || !req.user._id) {
+         return res.status(401).json({ error: 'Authentication required.' });
+    }
+
     try {
         const item = await LostItem.findById(req.params.id);
-        
+
         if (!item) {
             return res.status(404).json({ error: 'Item not found' });
         }
 
+        // Check if current user is the owner (Compare using the correct field)
+        // Assuming item.postedByEmail and req.user.email are the correct fields to compare
+        // OR item.postedBy (ObjectId) and req.user._id (ObjectId)
+        // Based on your previous code, it seems you were comparing ObjectIds.
+        // Make sure req.user._id is an ObjectId or convert item.postedBy.toString()
         if (item.postedBy.toString() !== req.user._id.toString()) {
-            return res.status(403).json({ error: 'Not authorized to delete this item' });
+             return res.status(403).json({ error: 'Not authorized to delete this item' });
         }
 
-        // Delete image from Cloudinary if it exists
-        if (item.imageUrl) {
-            const publicId = `college-community/lostfound/${path.basename(item.imageUrl, path.extname(item.imageUrl))}`;
-            await cloudinary.uploader.destroy(publicId, { resource_type: item.imageUrl.endsWith('.pdf') ? 'raw' : 'image' });
-        }
+        // --- FIX: Delete image from Cloudinary using the stored public_id ---
+        if (item.imagePublicId) { // Use the stored public_id
+            try {
+                // Determine resource type for Cloudinary deletion based on URL or stored info
+                // A more robust way is to store resource_type during upload if needed,
+                // but often checking the URL suffix or assuming 'image'/'raw' works.
+                // Cloudinary treats PDFs as 'raw' by default with auto resource_type during upload.
+                const isPdf = item.imageUrl && (item.imageUrl.endsWith('.pdf') || item.imagePublicId.includes('.pdf')); // Basic check
+                const resource_type = isPdf ? 'raw' : 'image';
 
+                const destroyResult = await cloudinary.uploader.destroy(item.imagePublicId, { resource_type: resource_type });
+                if (destroyResult.result === 'ok') {
+                   log(`[Cloudinary Delete Success] Public ID: ${item.imagePublicId}`);
+                } else {
+                   log(`[Cloudinary Delete Warning] Result for ${item.imagePublicId}: ${destroyResult.result || 'Unknown'}`);
+                }
+            } catch (cloudinaryDeleteErr) {
+                console.error('Error deleting image from Cloudinary:', cloudinaryDeleteErr);
+                log(`[Cloudinary Delete Error] Failed to delete ${item.imagePublicId}: ${cloudinaryDeleteErr.message}`);
+                // Decide if this failure should cause the whole delete operation to fail or just log
+                // return res.status(500).json({ error: 'Item deleted from DB, but failed to delete image from Cloudinary.' });
+            }
+        }
+        // --- End FIX ---
+
+        // Delete the item from the database
         await LostItem.findByIdAndDelete(req.params.id);
-        
         res.json({ message: 'Item deleted successfully' });
     } catch (err) {
+        console.error('[Delete Item Error]', err);
+        log(`[Delete Item Error] ${err.message}`);
         res.status(500).json({ error: 'Failed to delete item' });
     }
 });
@@ -181,7 +223,8 @@ router.delete('/:id', async (req, res) => {
 router.use((err, req, res, next) => {
     const errorMsg = `[Route Error] ${err.message}`;
     log(errorMsg);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('[Router Error]', err); // Log full error for debugging
+    res.status(500).json({ error: 'Internal server error in lostfound route' });
 });
 
 module.exports = router;
