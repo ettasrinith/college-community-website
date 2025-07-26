@@ -36,6 +36,15 @@ const examPaperSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Original file name is required']
   },
+  fileType: {
+    type: String,
+    enum: ['pdf', 'other'],
+    required: true
+  },
+  cloudinaryId: {
+    type: String,
+    default: null
+  },
   datePosted: {
     type: Date,
     default: Date.now
