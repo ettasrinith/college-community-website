@@ -94,10 +94,7 @@ router.post('/', (req, res) => {
             }
 
             // Use public_id from Cloudinary to construct the correct URL
-            const imageFile = req.files.image ? req.files.image[0].public_id : null;
-            const imageUrl = imageFile
-                ? `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/image/upload/${imageFile}${path.extname(req.files.image[0].originalname)}`
-                : null;
+            const imageUrl = req.files.image ? req.files.image[0].path : null;
 
             const itemData = {
                 name,
@@ -106,11 +103,10 @@ router.post('/', (req, res) => {
                 contact,
                 type,
                 date: date || new Date(),
-                imageUrl,
+                imageUrl, // This will be the correct Cloudinary URL
                 postedBy,
                 postedByEmail
             };
-
             const item = new LostItem(itemData);
             await item.save();
 
