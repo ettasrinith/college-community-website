@@ -93,7 +93,7 @@ router.post('/', (req, res) => {
                 return res.status(400).json({ error: errorMsg });
             }
 
-            const imageFile = req.files.image ? req.files.image[0].filename : null;
+            const imageFile = req.files.image ? req.files.image[0].path : null; // Use .path instead of .filename
 
             const itemData = {
                 name,
@@ -102,7 +102,7 @@ router.post('/', (req, res) => {
                 contact,
                 type,
                 date: date || new Date(),
-                imageUrl: imageFile ? `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/image/upload/college-community/lostfound/${imageFile}` : null,
+                imageUrl: imageFile, // Store the full Cloudinary URL
                 postedBy,
                 postedByEmail
             };
@@ -110,7 +110,7 @@ router.post('/', (req, res) => {
             const item = new LostItem(itemData);
             await item.save();
 
-            log(`[Item Saved] ID: ${item._id}, PostedBy: ${postedBy}`);
+            log(`[Item Saved] ID: ${item._id}, PostedBy: ${postedBy}, ImageUrl: ${item.imageUrl}`);
             res.status(201).json(item);
 
         } catch (err) {
@@ -162,7 +162,7 @@ router.delete('/:id', async (req, res) => {
         // Delete image from Cloudinary if it exists
         if (item.imageUrl) {
             const publicId = `college-community/lostfound/${path.basename(item.imageUrl, path.extname(item.imageUrl))}`;
-            await cloudinary.uploader.destroy(publicId);
+            await cloudinary.uploader.destroy(publicId, { resource_type: item.imageUrl.endsWith('.pdf') ? 'raw' : 'image' });
         }
 
         await LostItem.findByIdAndDelete(req.params.id);
