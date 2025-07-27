@@ -717,13 +717,9 @@ nav a {
   </footer>
 
   <script>
-// Load subjects into dropdown
-// Update the API_BASE_URL to use Render's URL or relative path
-// Load subjects into dropdown
-// Update the API_BASE_URL to use Render's URL or relative path
-const API_BASE_URL = window.location.origin + '/api';
+const API_BASE_URL = 'https://college-community-website.onrender.com/api';
 
-// DOM Elements (keep the same)
+// DOM Elements
 const subjectSelect = document.getElementById('subjectSelect');
 const semesterSelect = document.getElementById('semesterSelect');
 const yearSelect = document.getElementById('yearSelect');
@@ -733,61 +729,50 @@ const paperUploadForm = document.getElementById('paperUploadForm');
 const fileInput = document.getElementById('fileInput');
 const filePreview = document.getElementById('filePreview');
 
-// Load subjects from backend (updated to handle Render)
+// Load subjects
 async function loadSubjects() {
   try {
     const response = await fetch(`${API_BASE_URL}/papers`);
     if (!response.ok) throw new Error('Failed to fetch papers');
-
     const { data: papers } = await response.json();
     const subjectSet = new Set(papers.map(paper => paper.subject));
-
-    while (subjectSelect.options.length > 1) {
-      subjectSelect.remove(1);
-    }
-
+    subjectSelect.innerHTML = '<option value="">Subject</option>';
     Array.from(subjectSet).sort().forEach(subject => {
       const option = document.createElement('option');
       option.value = subject;
       option.textContent = subject;
       subjectSelect.appendChild(option);
     });
-  } catch (error) {
-    console.error('Error loading subjects:', error);
-    showAlert('Failed to load subjects. Please refresh the page.', 'error');
-  }
+  } catch (e) { alert('Cannot load subjects'); }
 }
 
-// Toggle upload form visibility (keep the same)
 function toggleUploadForm() {
-  uploadForm.classList.toggle('active');
+  uploadForm.style.display = uploadForm.style.display === 'block' ? 'none' : 'block';
 }
 
-// Handle file selection preview (keep the same)
+// File preview
 fileInput.addEventListener('change', () => {
   filePreview.innerHTML = '';
-
   if (fileInput.files.length > 0) {
     Array.from(fileInput.files).forEach(file => {
       const tag = document.createElement('span');
       tag.className = 'file-tag';
-      tag.innerHTML = `<i class="fas fa-file"></i> ${file.name}`;
+      tag.textContent = file.name;
       filePreview.appendChild(tag);
     });
   }
 });
 
-// Updated upload function for Cloudinary/local storage
+// Upload new paper (PDF)
 paperUploadForm.addEventListener('submit', async (e) => {
   e.preventDefault();
-
   const subject = document.getElementById('subject').value;
   const semester = document.getElementById('semester').value;
   const year = document.getElementById('year').value;
   const uploadedBy = document.getElementById('uploadedBy').value;
 
   if (!fileInput.files.length || !subject || !semester || !year) {
-    showAlert('Please fill in all required fields', 'error');
+    alert('Please fill in all required fields');
     return;
   }
 
@@ -798,66 +783,55 @@ paperUploadForm.addEventListener('submit', async (e) => {
   formData.append('year', year);
   formData.append('uploadedBy', uploadedBy || 'Anonymous');
 
-  const user = window.getCurrentUser?.();
-  if (user && user.email) {
-    formData.append('postedByEmail', user.email);
+  // Optional: Append current user's email if available (see your auth system)
+  if (window.getCurrentUser?.() && window.getCurrentUser().email) {
+    formData.append('postedByEmail', window.getCurrentUser().email);
   }
 
   const submitBtn = paperUploadForm.querySelector('button[type="submit"]');
   const originalText = submitBtn.innerHTML;
   submitBtn.disabled = true;
-  submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+  submitBtn.innerHTML = 'Uploading...';
 
   try {
     const response = await fetch(`${API_BASE_URL}/papers`, {
       method: 'POST',
       body: formData
     });
-
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || 'Upload failed');
-
-    showAlert('Upload successful!', 'success');
+    alert('Upload successful!');
     paperUploadForm.reset();
     filePreview.innerHTML = '';
     toggleUploadForm();
     await searchPapers();
   } catch (err) {
-    showAlert(`Upload failed: ${err.message}`, 'error');
+    alert('Upload failed: ' + err.message);
   } finally {
     submitBtn.disabled = false;
     submitBtn.innerHTML = originalText;
   }
 });
 
-// FIXED download function - simplified approach
-async function downloadPaper(paperId, originalName) {
-  try {
-    // Simply redirect to the download endpoint - backend handles everything
-    window.open(`${API_BASE_URL}/papers/download/${paperId}`, '_blank');
-  } catch (error) {
-    console.error('Download error:', error);
-    showAlert(`Download failed: ${error.message}`, 'error');
-  }
-}
+// Download handler
+window.downloadPaper = async function(paperId, originalName) {
+  window.open(`${API_BASE_URL}/papers/download/${paperId}`, '_blank');
+};
 
-// Updated search function to work with new paper data structure
+// List/search papers
 async function searchPapers() {
   const subject = subjectSelect.value;
   const semester = semesterSelect.value;
   const year = yearSelect.value;
-
   try {
     let url = `${API_BASE_URL}/papers?`;
     const params = new URLSearchParams();
-
     if (subject) params.append('subject', subject);
     if (semester) params.append('semester', semester);
     if (year) params.append('year', year);
-
     url += params.toString();
 
-    papersContainer.innerHTML = '<div class="loading">Loading...</div>';
+    papersContainer.innerHTML = 'Loading...';
 
     const response = await fetch(url);
     if (!response.ok) throw new Error('Search failed');
@@ -868,8 +842,7 @@ async function searchPapers() {
     if (!papers || papers.length === 0) {
       papersContainer.innerHTML = `
         <div class="empty-state">
-          <img src="/images/no-results.png" alt="No papers found">
-          <h3>No papers found</h3>
+          <strong>No papers found</strong>
           <p>Try adjusting your search filters or upload a new paper.</p>
         </div>
       `;
@@ -881,58 +854,35 @@ async function searchPapers() {
       div.className = 'paper-card';
       div.innerHTML = `
         <div class="paper-header">
-          <h3 class="paper-title">${escapeHtml(paper.subject)}</h3>
-          <span class="paper-date">${new Date(paper.datePosted).toLocaleDateString()}</span>
-          ${paper.fileType === 'pdf' ? '<span class="cloud-badge"><i class="fas fa-cloud"></i> Cloud</span>' : ''}
+          <b>${paper.subject}</b>
+          <span>${new Date(paper.datePosted).toLocaleDateString()}</span>
         </div>
-        <div class="paper-meta">
-          <span>
-            <i class="fas fa-calendar-alt"></i>
-            Semester ${paper.semester}, ${paper.year}
-          </span>
-          <span>
-            <i class="fas fa-user"></i>
-            Uploaded by ${escapeHtml(paper.uploadedBy || 'Anonymous')}
-          </span>
+        <div>
+          Semester: ${paper.semester}, Year: ${paper.year}<br>
+          Uploaded by: ${paper.uploadedBy || 'Anonymous'}
         </div>
-        <div class="paper-actions">
-          <button onclick="downloadPaper('${paper._id}', '${escapeHtml(paper.originalName || 'document')}')" class="download-btn">
-            <i class="fas fa-download"></i> Download
-          </button>
+        <div>
+          <button onclick="downloadPaper('${paper._id}', '${paper.originalName}')">Download</button>
         </div>
       `;
       papersContainer.appendChild(div);
     });
   } catch (error) {
-    console.error('Search error:', error);
-    papersContainer.innerHTML = '<div class="error">Error loading papers. Please try again.</div>';
+    papersContainer.innerHTML = `<div style="color:red;">Error loading papers. Try again.</div>`;
   }
 }
 
-// Utility functions
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
+// Filter events
+subjectSelect.addEventListener('change', searchPapers);
+semesterSelect.addEventListener('change', searchPapers);
+yearSelect.addEventListener('change', searchPapers);
 
-function showAlert(message, type = 'info') {
-  const alertDiv = document.createElement('div');
-  alertDiv.className = `alert alert-${type}`;
-  alertDiv.textContent = message;
-  document.body.appendChild(alertDiv);
-  setTimeout(() => alertDiv.remove(), 5000);
-}
-
-// Initialize on load
+// Init
 window.onload = () => {
   loadSubjects();
   searchPapers();
-
-  subjectSelect.addEventListener('change', searchPapers);
-  semesterSelect.addEventListener('change', searchPapers);
-  yearSelect.addEventListener('change', searchPapers);
 };
+
   </script>
      <script src="/auth-check.js"></script>
 </body>
