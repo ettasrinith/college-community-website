@@ -107,58 +107,38 @@ router.post('/', (req, res) => {
     }
   });
 });
-
-// --- FIXED GET - Download Paper ---
+// --- FIXED GET - Download Paper (Robust version using cloudinaryId) ---
 router.get('/download/:id', async (req, res) => {
   try {
     const paper = await ExamPaper.findById(req.params.id);
-
     if (!paper) {
       return res.status(404).json({ success: false, error: 'Exam paper record not found' });
     }
 
-    if (paper.fileType !== 'pdf' || !paper.fileName) {
-       return res.status(400).json({ success: false, error: 'File not available for download' });
+    // Check if essential data is present
+    if (paper.fileType !== 'pdf' || !paper.cloudinaryId) {
+       return res.status(400).json({ success: false, error: 'File not available for download (missing Cloudinary ID)' });
     }
 
-    // Simple redirect to Cloudinary URL - browser will handle PDF properly
-    res.redirect(paper.fileName);
+    // Generate a fresh download URL using the stored public_id (cloudinaryId)
+    // This avoids issues with potentially malformed URLs stored in fileName
+    const downloadUrl = cloudinary.url(paper.cloudinaryId, {
+      resource_type: 'raw', // Important: match the upload resource type
+      secure: true,         // Ensure HTTPS
+      // Optional: Add download flag to force download with original filename
+      // flags: 'attachment', // Uncomment if you want to force download instead of inline view
+      // Optional: Specify the attachment filename if needed
+      // ...(!paper.originalName ? {} : { attachment: true, filename: paper.originalName })
+    });
+
+    console.log(`[Download] Generated URL for ID ${req.params.id}: ${downloadUrl}`); // For debugging
+
+    // Redirect the client to the correct Cloudinary URL
+    res.redirect(downloadUrl);
 
   } catch (error) {
     console.error('[Download Error - ExamPaper]:', error);
     res.status(500).json({ success: false, error: `Download failed: ${error.message}` });
-  }
-});
-
-// --- DELETE - Delete an Exam Paper ---
-router.delete('/:id', async (req, res) => {
-  try {
-    const paper = await ExamPaper.findById(req.params.id);
-
-    if (!paper) {
-      return res.status(404).json({ success: false, error: 'Exam paper record not found' });
-    }
-
-    if (paper.fileType === 'pdf' && paper.cloudinaryId) {
-      try {
-        const destroyResult = await cloudinary.uploader.destroy(paper.cloudinaryId, { resource_type: 'raw' });
-
-        if (destroyResult.result === 'ok') {
-          console.log(`[Cloudinary Delete Success] Public ID: ${paper.cloudinaryId}`);
-        } else {
-          console.warn(`[Cloudinary Delete Warning] Public ID: ${paper.cloudinaryId}, Result: ${destroyResult.result}`);
-        }
-      } catch (cloudinaryDeleteErr) {
-        console.error('[Cloudinary Delete Error]:', cloudinaryDeleteErr);
-      }
-    }
-
-    await paper.deleteOne();
-    res.json({ success: true, message: 'Exam paper record and associated file deleted successfully' });
-
-  } catch (err) {
-    console.error('[Delete Error - ExamPaper]:', err);
-    res.status(500).json({ success: false, error: `Delete failed: ${err.message}` });
   }
 });
 
