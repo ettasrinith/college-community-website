@@ -598,8 +598,7 @@
   </footer>
 
   <script>
-
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = 'https://college-community-website.onrender.com/api';
 const sellContainer = document.getElementById('sellcontainer');
 const itemForm = document.getElementById('itemForm');
 
@@ -651,7 +650,7 @@ itemForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const formData = new FormData(itemForm);
 
-  // Get logged in user
+  // You must provide getCurrentUser() in your global JS
   const user = window.getCurrentUser();
   if (!user || !user._id || !user.email) {
     alert('Please log in before submitting an item.');
@@ -685,6 +684,7 @@ itemForm.addEventListener('submit', async (e) => {
 });
 
 window.addEventListener('DOMContentLoaded', fetchItems);
+
 </script>
 <script src="/auth-check.js"></script>
 
