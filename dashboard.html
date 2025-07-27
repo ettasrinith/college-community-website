@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="css/style.css" />
   <style>
+    /* Your styles unchanged */
     body {
       font-family: 'Segoe UI', sans-serif;
       background: #faf9f9;
@@ -53,12 +54,24 @@
       border-radius: 5px;
       padding: 15px;
       margin-bottom: 15px;
+      position: relative;
     }
 
     .post img {
       max-width: 100%;
       margin-top: 10px;
       border-radius: 8px;
+    }
+
+    .post a {
+      display: inline-block;
+      margin-top: 10px;
+      color: #0077cc;
+      text-decoration: none;
+    }
+
+    .post a:hover {
+      text-decoration: underline;
     }
 
     .post small {
@@ -71,9 +84,10 @@
       border: none;
       padding: 6px 12px;
       border-radius: 5px;
-      float: right;
+      position: absolute;
+      right: 15px;
+      bottom: 15px;
       cursor: pointer;
-      margin-top: 10px;
     }
 
     .empty-message {
@@ -139,7 +153,7 @@
   <div id="emptyMessage" class="empty-message" style="display: none;">No posts found.</div>
 </div>
 
-<!-- ✅ Auth script first -->
+<!-- Auth script -->
 <script>
   class AuthManager {
     constructor() {
@@ -168,18 +182,20 @@
     }
 
     setupLogoutHandler() {
-      const logoutBtn = document.getElementById('logoutBtn');
-      if (logoutBtn) {
-        logoutBtn.addEventListener('click', async () => {
-          try {
-            await fetch('/auth/logout');
-          } catch (e) {
-            console.warn('Logout failed, forcing redirect');
-          }
-          localStorage.clear();
-          window.location.href = '/login.html';
-        });
-      }
+      const logoutBtns = [document.getElementById('logoutBtn'), document.getElementById('logoutBtnSecondary')];
+      logoutBtns.forEach(logoutBtn => {
+        if (logoutBtn) {
+          logoutBtn.addEventListener('click', async () => {
+            try {
+              await fetch('/auth/logout');
+            } catch (e) {
+              console.warn('Logout failed, forcing redirect');
+            }
+            localStorage.clear();
+            window.location.href = '/login.html';
+          });
+        }
+      });
     }
 
     isLoggedIn() {
@@ -205,9 +221,10 @@
   window.requireAuth = (url) => window.authManager.requireAuth(url);
 </script>
 
-<!-- ✅ Main dashboard logic -->
+<!-- Main dashboard logic -->
 <script>
-  const API_BASE_URL = 'http://localhost:3000/api';
+  // Change this to your deployed backend URL!
+  const API_BASE_URL = 'https://college-community-website.onrender.com/api';
   let activeTab = 'lost';
   let userEmail = '';
 
@@ -232,126 +249,141 @@
 
   const tabs = document.querySelectorAll('.tab-btn');
 
- 
- 
- async function fetchPosts() {
-  document.getElementById('postsContainer').innerHTML = '<p>Loading...</p>';
-  document.getElementById('emptyMessage').style.display = 'none';
+  async function fetchPosts() {
+    const container = document.getElementById('postsContainer');
+    const empty = document.getElementById('emptyMessage');
+    container.innerHTML = '<p>Loading...</p>';
+    empty.style.display = 'none';
 
-  try {
-    let url = '';
-    if (activeTab === 'lost') {
-      url = `${API_BASE_URL}/lostfound/user/${encodeURIComponent(userEmail)}`;
-    } else if (activeTab === 'marketplace') {
-      url = `${API_BASE_URL}/marketplace`;
-    } else if (activeTab === 'papers') {
-      url = `${API_BASE_URL}/papers`;
-    } else if (activeTab === 'announcements') {
-      url = `${API_BASE_URL}/announcements`;
-    }
+    try {
+      let url = '';
+      if (activeTab === 'lost') {
+        url = `${API_BASE_URL}/lostfound/user/${encodeURIComponent(userEmail)}`;
+      } else if (activeTab === 'marketplace') {
+        url = `${API_BASE_URL}/marketplace`;
+      } else if (activeTab === 'papers') {
+        url = `${API_BASE_URL}/papers`;
+      } else if (activeTab === 'announcements') {
+        url = `${API_BASE_URL}/announcements`;
+      }
 
-    const res = await fetch(url);
-    const data = await res.json();
-    const posts = data.data || data;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Failed to fetch posts');
+      const data = await res.json();
+      const posts = data.data || data;
 
-    const filtered = (activeTab === 'announcements')
-      ? posts.filter(p => p.postedByEmail === userEmail)
-      : (activeTab === 'papers')
+      // Filter posts of this user except for lost (which already has user filter)
+      const filtered = (activeTab === 'announcements' || activeTab === 'papers' || activeTab === 'marketplace')
         ? posts.filter(p => p.postedByEmail === userEmail)
-        : (activeTab === 'marketplace')
-          ? posts.filter(p => p.postedByEmail === userEmail)
-          : posts;
+        : posts;
 
-    renderPosts(filtered);
-  } catch (error) {
-    console.error('Post fetch error:', error);
-    document.getElementById('postsContainer').innerHTML = '<p style="color:red;">Failed to load posts.</p>';
-  }
-}
-  function renderPosts(posts) {
-  const container = document.getElementById('postsContainer');
-  const empty = document.getElementById('emptyMessage');
-  container.innerHTML = '';
-  empty.style.display = posts.length === 0 ? 'block' : 'none';
-
-  posts.forEach(post => {
-    const div = document.createElement('div');
-    div.className = 'post';
-    let content = '';
-
-    if (activeTab === 'lost') {
-      content = `
-        <h3>${post.name}</h3>
-        <p><strong>Description:</strong> ${post.description}</p>
-        <p><strong>Location:</strong> ${post.location}</p>
-        <p><strong>Type:</strong> ${post.type}</p>
-        ${post.imageUrl ? `<img src="/uploads/images/${post.imageUrl}"/>` : ''}
-        <p><small>Posted on: ${new Date(post.date).toLocaleString()}</small></p>
-        <button class="delete-btn" onclick="deletePost('${post._id}', 'lost')">Delete</button>
-      `;
-    } else if (activeTab === 'marketplace') {
-      content = `
-        <h3>${post.itemName}</h3>
-        <p><strong>Category:</strong> ${post.itemCategory}</p>
-        <p><strong>Price:</strong> ₹${post.itemPrice}</p>
-        ${post.imageUrl ? `<img src="${post.imageUrl}" />` : ''}
-        <p><small>Posted: ${new Date(post.createdAt).toLocaleString()}</small></p>
-        <button class="delete-btn" onclick="deletePost('${post._id}', 'marketplace')">Delete</button>
-      `;
-    } else if (activeTab === 'papers') {
-      content = `
-        <h3>${post.subject} - Semester ${post.semester}, ${post.year}</h3>
-        <p><strong>Uploaded by:</strong> ${post.uploadedBy}</p>
-        <p><strong>File:</strong> ${post.originalName}</p>
-        <p><small>${new Date(post.datePosted).toLocaleString()}</small></p>
-        <button class="delete-btn" onclick="deletePost('${post._id}', 'papers')">Delete</button>
-      `;
-    } else if (activeTab === 'announcements') {
-      content = `
-        <h3>${post.title}</h3>
-        <p>${post.content || ''}</p>
-        ${post.fileUrl ? `<a href="${post.fileUrl}" target="_blank">View Attachment</a>` : ''}
-        <p><small>Posted by: ${post.postedByName} on ${new Date(post.datePosted).toLocaleString()}</small></p>
-        <button class="delete-btn" onclick="deletePost('${post._id}', 'announcements')">Delete</button>
-      `;
+      renderPosts(filtered);
+    } catch (error) {
+      console.error('Post fetch error:', error);
+      container.innerHTML = '<p style="color:red;">Failed to load posts.</p>';
     }
-
-    div.innerHTML = content;
-    container.appendChild(div);
-  });
-}
-  async function deletePost(id, type) {
-  if (!confirm('Are you sure you want to delete this post?')) return;
-
-  try {
-    const endpoint =
-      type === 'lost' ? `/api/lostfound/${id}` :
-      type === 'marketplace' ? `/api/marketplace/${id}` :
-      type === 'papers' ? `/api/papers/${id}` :
-      `/api/announcements/${id}`;
-
-    const res = await fetch(endpoint, { 
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ userEmail: userEmail })
-    });
-    const result = await res.json();
-
-    if (!res.ok) throw new Error(result.error || 'Delete failed');
-
-    alert('Post deleted successfully');
-    fetchPosts();
-  } catch (err) {
-    alert(`Failed to delete: ${err.message}`);
   }
-}
+
+  function renderPosts(posts) {
+    const container = document.getElementById('postsContainer');
+    const empty = document.getElementById('emptyMessage');
+    container.innerHTML = '';
+    empty.style.display = posts.length === 0 ? 'block' : 'none';
+
+    posts.forEach(post => {
+      const div = document.createElement('div');
+      div.className = 'post';
+      let content = '';
+
+      if (activeTab === 'lost') {
+        content = `
+          <h3>${escapeHtml(post.name)}</h3>
+          <p><strong>Description:</strong> ${escapeHtml(post.description)}</p>
+          <p><strong>Location:</strong> ${escapeHtml(post.location)}</p>
+          <p><strong>Type:</strong> ${escapeHtml(post.type)}</p>
+          ${post.imageUrl ? `<img src="${post.imageUrl}" alt="Lost & Found Image" />` : ''}
+          <p><small>Posted on: ${new Date(post.date).toLocaleString()}</small></p>
+          <button class="delete-btn" onclick="deletePost('${post._id}', 'lost')">Delete</button>
+        `;
+      } else if (activeTab === 'marketplace') {
+        content = `
+          <h3>${escapeHtml(post.itemName)}</h3>
+          <p><strong>Category:</strong> ${escapeHtml(post.itemCategory)}</p>
+          <p><strong>Price:</strong> ₹${post.itemPrice.toFixed(2)}</p>
+          ${post.imageUrl ? `<img src="${post.imageUrl}" alt="Marketplace Item Image" />` : ''}
+          <p><small>Posted: ${new Date(post.createdAt).toLocaleString()}</small></p>
+          <button class="delete-btn" onclick="deletePost('${post._id}', 'marketplace')">Delete</button>
+        `;
+      } else if (activeTab === 'papers') {
+        content = `
+          <h3>${escapeHtml(post.subject)} - Semester ${post.semester}, ${post.year}</h3>
+          <p><strong>Uploaded by:</strong> ${escapeHtml(post.uploadedBy)}</p>
+          <p><strong>File:</strong> <a href="${post.fileName}" target="_blank" rel="noopener noreferrer">${escapeHtml(post.originalName)}</a></p>
+          <p><small>${new Date(post.datePosted).toLocaleString()}</small></p>
+          <button class="delete-btn" onclick="deletePost('${post._id}', 'papers')">Delete</button>
+        `;
+      } else if (activeTab === 'announcements') {
+        content = `
+          <h3>${escapeHtml(post.title)}</h3>
+          <p>${escapeHtml(post.content || '')}</p>
+          ${post.fileUrl ? `<a href="${post.fileUrl}" target="_blank" rel="noopener noreferrer">View Attachment</a>` : ''}
+          <p><small>Posted by: ${escapeHtml(post.postedByName)} on ${new Date(post.datePosted).toLocaleString()}</small></p>
+          <button class="delete-btn" onclick="deletePost('${post._id}', 'announcements')">Delete</button>
+        `;
+      }
+
+      div.innerHTML = content;
+      container.appendChild(div);
+    });
+  }
+
+  async function deletePost(id, type) {
+    if (!confirm('Are you sure you want to delete this post?')) return;
+
+    try {
+      const endpoint =
+        type === 'lost' ? `${API_BASE_URL}/lostfound/${id}` :
+        type === 'marketplace' ? `${API_BASE_URL}/marketplace/${id}` :
+        type === 'papers' ? `${API_BASE_URL}/papers/${id}` :
+        `${API_BASE_URL}/announcements/${id}`;
+
+      const res = await fetch(endpoint, { 
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userEmail: userEmail })
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) throw new Error(result.error || 'Delete failed');
+
+      alert('Post deleted successfully');
+      fetchPosts();
+    } catch (err) {
+      alert(`Failed to delete: ${err.message}`);
+    }
+  }
+
   function switchTab(tab) {
     activeTab = tab;
     tabs.forEach(btn => btn.classList.remove('active'));
     document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`).classList.add('active');
     fetchPosts();
+  }
+
+  // Simple HTML escape helper to prevent XSS in UI
+  function escapeHtml(text) {
+    if (!text) return '';
+    return text.replace(/[&<>"']/g, function(m) {
+      switch (m) {
+        case '&': return '&amp;';
+        case '<': return '&lt;';
+        case '>': return '&gt;';
+        case '"': return '&quot;';
+        case "'": return '&#39;';
+        default: return m;
+      }
+    });
   }
 </script>
 
