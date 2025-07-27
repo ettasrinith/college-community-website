@@ -1,12 +1,13 @@
 const mongoose = require('mongoose');
 
-const AnnouncementSchema = new mongoose.Schema({
+const announcementSchema = new mongoose.Schema({
   title: { type: String, required: true },
   content: String,
-  postedByName: String,
+  postedByName: { type: String, required: true },
   postedByEmail: { type: String, required: true },
-  fileUrl: String, // URL for PDF/image file
-  datePosted: { type: Date, default: Date.now }
+  fileUrl: String,             // URL from Cloudinary
+  cloudinaryPublicId: String,  // Cloudinary Public ID for deletion
+  datePosted: { type: Date, default: Date.now },
 });
 
-module.exports = mongoose.model('Announcement', AnnouncementSchema);
+module.exports = mongoose.model('Announcement', announcementSchema);
