@@ -226,196 +226,197 @@
     <!-- Load auth.js script -->
     <script src="auth-check.js"></script>
     <script>
-        // Function to update header based on auth status
-        async function updateHeaderAuth() {
-            try {
-                const response = await fetch('/auth/status');
-                const data = await response.json();
+// Frontend JS for Announcements Page and Auth UI
 
-                const loginBtn = document.getElementById('loginBtn');
-                const userInfo = document.getElementById('userInfo');
-                const userEmailSpan = document.getElementById('userEmail');
-                const logoutBtn = document.getElementById('logoutBtn');
+// Elements
+const loginBtn = document.getElementById('loginBtn');
+const userInfo = document.getElementById('userInfo');
+const userEmailSpan = document.getElementById('userEmail');
+const logoutBtn = document.getElementById('logoutBtn');
+const announcementForm = document.getElementById('announcementForm');
+const announcementsContainer = document.getElementById('announcements');
+const postedByEmailInput = document.getElementById('postedByEmail');
+const postedByNameInput = document.getElementById('postedByName');
 
-                if (data.authenticated && data.user) {
-                    // User is logged in
-                    loginBtn.style.display = 'none';
-                    userInfo.style.display = 'flex'; // Assuming your CSS uses flex for .user-info
-                    userEmailSpan.textContent = data.user.email;
+const API_BASE_URL = window.location.origin + '/api';
 
-                    // Populate form hidden field
-                    document.getElementById('postedByEmail').value = data.user.email;
-                    document.getElementById('postedByName').value = data.user.name || '';
+// Update header and form according to auth status
+async function updateHeaderAuth() {
+  try {
+    const res = await fetch('/auth/status');
+    const data = await res.json();
 
-                } else {
-                    // User is not logged in
-                    loginBtn.style.display = 'block';
-                    userInfo.style.display = 'none';
-                    // Clear form fields if needed
-                    document.getElementById('postedByEmail').value = '';
-                    document.getElementById('postedByName').value = '';
-                }
-            } catch (error) {
-                console.error('Error checking auth status for header:', error);
-                // On error, assume not logged in or handle gracefully
-                document.getElementById('loginBtn').style.display = 'block';
-                document.getElementById('userInfo').style.display = 'none';
-            }
-        }
+    if (data.authenticated && data.user) {
+      loginBtn.style.display = 'none';
+      userInfo.style.display = 'flex';
+      userEmailSpan.textContent = data.user.email;
 
-        // Logout handler
-        function setupLogout() {
-            const logoutBtn = document.getElementById('logoutBtn');
-            if (logoutBtn) {
-                logoutBtn.addEventListener('click', async (e) => {
-                    e.preventDefault();
-                    try {
-                        const response = await fetch('/auth/logout', {
-                            method: 'GET' // Or POST, depending on your route
-                        });
-                        if (response.ok) {
-                            // Update header immediately
-                            document.getElementById('loginBtn').style.display = 'block';
-                            document.getElementById('userInfo').style.display = 'none';
-                            // Redirect to login
-                            window.location.href = '/login.html';
-                        } else {
-                            console.error('Logout failed');
-                        }
-                    } catch (error) {
-                        console.error('Logout error:', error);
-                    }
-                });
-            }
-        }
+      postedByEmailInput.value = data.user.email;
+      postedByNameInput.value = data.user.name || '';
 
-        // Check admin status and show form
-        async function checkAndShowAdminForm() {
-            try {
-                // Get current user email from the header state or fetch again
-                const emailSpan = document.getElementById('userEmail');
-                const userEmail = emailSpan ? emailSpan.textContent : null;
+      // Show form only if admin (trigger check)
+      await checkAndShowAdminForm(data.user.email);
+    } else {
+      loginBtn.style.display = 'block';
+      userInfo.style.display = 'none';
+      postedByEmailInput.value = '';
+      postedByNameInput.value = '';
+      announcementForm.style.display = 'none';
+    }
+  } catch (error) {
+    console.error('Auth status fetch failed:', error);
+    loginBtn.style.display = 'block';
+    userInfo.style.display = 'none';
+    announcementForm.style.display = 'none';
+  }
+}
 
-                if (!userEmail) {
-                    // Not logged in or email not available yet
-                    document.getElementById('announcementForm').style.display = 'none';
-                    return;
-                }
+// Logout handler
+function setupLogout() {
+  if (!logoutBtn) return;
+  logoutBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch('/auth/logout', { method: 'GET' });
+      if (res.ok) {
+        loginBtn.style.display = 'block';
+        userInfo.style.display = 'none';
+        announcementForm.style.display = 'none';
+        window.location.href = '/login.html';
+      }
+    } catch (e) {
+      console.error('Logout error:', e);
+    }
+  });
+}
 
-                // Fetch admin list
-                const response = await fetch('/config/admins.json');
-                if (!response.ok) {
-                    console.warn('Could not load admins list');
-                    document.getElementById('announcementForm').style.display = 'none';
-                    return;
-                }
-                const admins = await response.json();
+// Check if user email is in admins list and show form accordingly
+async function checkAndShowAdminForm(email) {
+  if (!email) {
+    announcementForm.style.display = 'none';
+    return;
+  }
 
-                if (admins.includes(userEmail)) {
-                    document.getElementById('announcementForm').style.display = 'block';
-                } else {
-                    document.getElementById('announcementForm').style.display = 'none';
-                }
-            } catch (error) {
-                console.error('Error checking admin status:', error);
-                document.getElementById('announcementForm').style.display = 'none';
-            }
-        }
+  try {
+    const res = await fetch('/config/admins.json');
+    if (!res.ok) throw new Error('Failed to load admin list');
+    const admins = await res.json();
 
+    if (admins.includes(email)) {
+      announcementForm.style.display = 'block';
+    } else {
+      announcementForm.style.display = 'none';
+    }
+  } catch (err) {
+    console.warn('Admin check failed:', err);
+    announcementForm.style.display = 'none';
+  }
+}
 
-        async function loadAnnouncements() {
-            const container = document.getElementById('announcements');
-            try {
-                const response = await fetch('/api/announcements');
-                if (!response.ok) {
-                    throw new Error(`Server error: ${response.status}`);
-                }
-                const announcements = await response.json();
-                container.innerHTML = '';
-                if (!announcements || announcements.length === 0) {
-                    container.innerHTML = '<div class="no-announcements">No announcements yet. Check back later!</div>';
-                    return;
-                }
-                announcements.forEach(announcement => {
-                    const announcementEl = document.createElement('div');
-                    announcementEl.className = 'announcement-card';
-                    const fileLink = announcement.fileUrl ?
-                        `<a href="${announcement.fileUrl}" class="announcement-file" target="_blank">View Attachment</a>` :
-                        '';
-                    announcementEl.innerHTML = `
-                        <h3 class="announcement-title">${announcement.title}</h3>
-                        <div class="announcement-meta">
-                            <span>Posted by: ${announcement.postedByName}</span>
-                            <span>${new Date(announcement.datePosted).toLocaleString()}</span>
-                        </div>
-                        <div class="announcement-content">${announcement.content || ''}</div>
-                        ${fileLink}
-                    `;
-                    container.appendChild(announcementEl);
-                });
-            } catch (error) {
-                console.error('Error loading announcements:', error);
-                container.innerHTML = `
-                    <div class="error-message">
-                        <p>Failed to load announcements.</p>
-                        <button onclick="loadAnnouncements()" class="btn">Try Again</button>
-                    </div>
-                `;
-            }
-        }
+// Load announcements from backend
+async function loadAnnouncements() {
+  announcementsContainer.innerHTML = '<div class="loading-message">Loading announcements...</div>';
+  try {
+    const res = await fetch(`${API_BASE_URL}/announcements`);
+    if (!res.ok) throw new Error('Failed to fetch announcements');
+    const announcements = await res.json();
 
-        async function handleAnnouncementSubmit(e) {
-            e.preventDefault();
-            const form = e.target;
-            const submitBtn = form.querySelector('button[type="submit"]');
-            const originalBtnText = submitBtn.textContent;
-            try {
-                submitBtn.disabled = true;
-                submitBtn.textContent = 'Posting...';
-                const formData = new FormData(form);
-                const response = await fetch('/api/announcements', {
-                    method: 'POST',
-                    body: formData
-                });
+    if (!announcements || announcements.length === 0) {
+      announcementsContainer.innerHTML = '<div class="no-announcements">No announcements yet. Check back later!</div>';
+      return;
+    }
 
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.error || 'Failed to post announcement');
-                }
-                form.reset();
-                // Reload announcements
-                await loadAnnouncements();
-                // Optionally, show success message
-                 alert('Announcement posted successfully!');
-            } catch (error) {
-                console.error('Error submitting announcement:', error);
-                alert(error.message || 'Failed to post announcement. Please try again.');
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.textContent = originalBtnText;
-            }
-        }
+    announcementsContainer.innerHTML = '';
+    announcements.forEach(ann => {
+      const card = document.createElement('div');
+      card.className = 'announcement-card';
 
-        // Run on page load
-        document.addEventListener('DOMContentLoaded', async function () {
-             // 1. Update header authentication status
-            await updateHeaderAuth();
+      let attachmentLink = '';
+      if (ann.fileUrl) {
+        attachmentLink = `<a href="${ann.fileUrl}" class="announcement-file" target="_blank" rel="noopener noreferrer">View Attachment</a>`;
+      }
 
-            // 2. Setup logout button
-            setupLogout();
+      card.innerHTML = `
+        <h3 class="announcement-title">${escapeHtml(ann.title)}</h3>
+        <div class="announcement-meta">
+          <span>Posted by: ${escapeHtml(ann.postedByName)}</span>
+          <span>${new Date(ann.datePosted).toLocaleString()}</span>
+        </div>
+        <div class="announcement-content">${escapeHtml(ann.content || '')}</div>
+        ${attachmentLink}
+      `;
 
-            // 3. Load announcements for everyone
-            await loadAnnouncements();
+      announcementsContainer.appendChild(card);
+    });
+  } catch (error) {
+    console.error('Failed to load announcements:', error);
+    announcementsContainer.innerHTML = `
+      <div class="error-message">
+        <p>Failed to load announcements.</p>
+        <button class="btn" onclick="loadAnnouncements()">Try Again</button>
+      </div>
+    `;
+  }
+}
 
-            // 4. Check if user is admin and show form
-            // We need to ensure the auth status is updated first
-            // A small delay or re-check might be needed if updateHeaderAuth is async
-            // Let's re-check admin status after initial auth update
-             setTimeout(checkAndShowAdminForm, 100); // Small delay to ensure DOM/email is updated
+// Escape HTML for security in displaying
+function escapeHtml(text) {
+  if (!text) return '';
+  return text.replace(/[&<>"']/g, function(m) {
+    switch (m) {
+      case '&': return '&amp;';
+      case '<': return '&lt;';
+      case '>': return '&gt;';
+      case '"': return '&quot;';
+      case "'": return '&#39;';
+      default: return m;
+    }
+  });
+}
 
-            // 5. Attach form submit handler
-            document.getElementById('announcementForm').addEventListener('submit', handleAnnouncementSubmit);
-        });
+// Handle announcement form submission
+announcementForm.addEventListener('submit', async function (e) {
+  e.preventDefault();
+
+  const submitBtn = announcementForm.querySelector('button[type="submit"]');
+  const originalText = submitBtn.textContent;
+
+  try {
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Posting...';
+
+    const formData = new FormData(announcementForm);
+
+    // postedByEmail is populated via updateHeaderAuth()
+
+    const res = await fetch(`${API_BASE_URL}/announcements`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const errorResp = await res.json().catch(() => ({}));
+      throw new Error(errorResp.error || 'Failed to post announcement');
+    }
+
+    announcementForm.reset();
+    await loadAnnouncements();
+    alert('Announcement posted successfully!');
+  } catch (err) {
+    alert(err.message || 'Failed to post announcement.');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalText;
+  }
+});
+
+// On page load
+document.addEventListener('DOMContentLoaded', async () => {
+  await updateHeaderAuth();
+  setupLogout();
+  await loadAnnouncements();
+});
+
 
 
     </script>
