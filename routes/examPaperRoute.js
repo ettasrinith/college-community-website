@@ -121,52 +121,22 @@ router.get('/download/:id', async (req, res) => {
        return res.status(400).json({ success: false, error: 'File not available for download' });
     }
 
-    // Generate proper download URL with PDF extension
-    const downloadUrl = cloudinary.url(paper.cloudinaryId, {
-        resource_type: 'raw',
-        flags: `attachment:${encodeURIComponent(paper.originalName)}`
-    });
-    
+    // Method 1: Use the direct Cloudinary URL with attachment parameter
+    const downloadUrl = `${paper.fileName}?fl_attachment=${encodeURIComponent(paper.originalName)}`;
     res.redirect(downloadUrl);
+
+    // Alternative Method 2: If Method 1 doesn't work, try this
+    // const downloadUrl = cloudinary.url(paper.cloudinaryId, {
+    //     resource_type: 'raw',
+    //     attachment: true
+    // });
+    // res.redirect(downloadUrl);
 
   } catch (error) {
     console.error('[Download Error - ExamPaper]:', error);
     res.status(500).json({ success: false, error: `Download failed: ${error.message}` });
   }
 });
-
-// --- DELETE - Delete an Exam Paper ---
-router.delete('/:id', async (req, res) => {
-  try {
-    const paper = await ExamPaper.findById(req.params.id);
-
-    if (!paper) {
-      return res.status(404).json({ success: false, error: 'Exam paper record not found' });
-    }
-
-    if (paper.fileType === 'pdf' && paper.cloudinaryId) {
-      try {
-        const destroyResult = await cloudinary.uploader.destroy(paper.cloudinaryId, { resource_type: 'raw' });
-
-        if (destroyResult.result === 'ok') {
-          console.log(`[Cloudinary Delete Success] Public ID: ${paper.cloudinaryId}`);
-        } else {
-          console.warn(`[Cloudinary Delete Warning] Public ID: ${paper.cloudinaryId}, Result: ${destroyResult.result}`);
-        }
-      } catch (cloudinaryDeleteErr) {
-        console.error('[Cloudinary Delete Error]:', cloudinaryDeleteErr);
-      }
-    }
-
-    await paper.deleteOne();
-    res.json({ success: true, message: 'Exam paper record and associated file deleted successfully' });
-
-  } catch (err) {
-    console.error('[Delete Error - ExamPaper]:', err);
-    res.status(500).json({ success: false, error: `Delete failed: ${err.message}` });
-  }
-});
-
 // --- GET - Fetch Papers ---
 router.get('/', async (req, res) => {
   try {
