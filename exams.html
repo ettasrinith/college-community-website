@@ -719,6 +719,8 @@ nav a {
   <script>
 // Load subjects into dropdown
 // Update the API_BASE_URL to use Render's URL or relative path
+// Load subjects into dropdown
+// Update the API_BASE_URL to use Render's URL or relative path
 const API_BASE_URL = window.location.origin + '/api';
 
 // DOM Elements (keep the same)
@@ -828,38 +830,11 @@ paperUploadForm.addEventListener('submit', async (e) => {
   }
 });
 
-// Updated download function for Cloudinary/local files
+// FIXED download function - simplified approach
 async function downloadPaper(paperId, originalName) {
   try {
-    // First, get paper details to determine file type
-    const paperResponse = await fetch(`${API_BASE_URL}/papers/${paperId}`);
-    if (!paperResponse.ok) {
-      throw new Error('Paper not found');
-    }
-    const paper = await paperResponse.json();
-
-    if (paper.fileType === 'pdf') {
-      // For PDFs stored in Cloudinary, redirect to download URL
-      window.open(`${API_BASE_URL}/papers/download/${paperId}`, '_blank');
-    } else {
-      // For local files, use the download endpoint
-      const response = await fetch(`${API_BASE_URL}/papers/download/${paperId}`);
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Download failed');
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = originalName || paper.originalName || 'document';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-    }
+    // Simply redirect to the download endpoint - backend handles everything
+    window.open(`${API_BASE_URL}/papers/download/${paperId}`, '_blank');
   } catch (error) {
     console.error('Download error:', error);
     showAlert(`Download failed: ${error.message}`, 'error');
