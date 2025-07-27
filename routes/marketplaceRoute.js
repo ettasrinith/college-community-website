@@ -2,26 +2,35 @@ const express = require('express');
 const MarketplaceItem = require('../models/MarketplaceItem');
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
 const router = express.Router();
 
-// Configure multer for image uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, '../sell/images');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
+// Cloudinary Configuration
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true
+});
+
+// Cloudinary Storage for Images
+const cloudinaryStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: async (req, file) => {
+    return {
+      folder: 'marketplace-items',
+      allowed_formats: ['jpg', 'jpeg', 'png'],
+      transformation: [{ width: 800, height: 600, crop: 'limit' }],
+      public_id: `item-${Date.now()}-${path.parse(file.originalname).name}`
+    };
   }
 });
 
+// Multer Middleware with Cloudinary
 const upload = multer({
-  storage: storage,
+  storage: cloudinaryStorage,
   fileFilter: (req, file, cb) => {
     const filetypes = /jpeg|jpg|png/;
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
@@ -29,12 +38,12 @@ const upload = multer({
     if (extname && mimetype) {
       return cb(null, true);
     }
-    cb(new Error('Only JPEG/PNG images are allowed'));
+    cb(new Error('Only JPEG/PNG images are allowed (max 5MB)'));
   },
-  limits: { fileSize: 5 * 1024 * 1024 }
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
 
-// POST: Create a new marketplace item with image
+// POST: Create new marketplace item
 router.post('/', upload.single('image'), async (req, res) => {
   try {
     const {
@@ -48,8 +57,11 @@ router.post('/', upload.single('image'), async (req, res) => {
       postedByEmail
     } = req.body;
 
-    if (!postedBy || !postedByEmail) {
-      return res.status(400).send({ error: 'Missing postedBy or postedByEmail fields' });
+    if (!itemName || !itemPrice || !contact || !postedBy || !postedByEmail) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields'
+      });
     }
 
     const itemData = {
@@ -61,44 +73,79 @@ router.post('/', upload.single('image'), async (req, res) => {
       itemCategory,
       postedBy,
       postedByEmail,
-      imageUrl: req.file ? `/sell/images/${req.file.filename}` : null
+      imageUrl: req.file ? req.file.path : null
     };
 
     const item = new MarketplaceItem(itemData);
     await item.save();
-    res.status(201).send(item);
-  } catch (err) {
-    res.status(400).send({ error: err.message });
-  }
-});
-// DELETE: Delete a marketplace item and its associated image
-router.delete('/:id', async (req, res) => {
-  try {
-    const item = await MarketplaceItem.findById(req.params.id);
-    if (!item) return res.status(404).send({ error: 'Item not found' });
 
-    // Remove image file if it exists
-    if (item.imageUrl) {
-      const imagePath = path.join(__dirname, '..', item.imageUrl);
-      if (fs.existsSync(imagePath)) {
-        fs.unlinkSync(imagePath);
-      }
-    }
+    res.status(201).json({
+      success: true,
+      message: 'Item created successfully',
+      data: item
+    });
 
-    await item.deleteOne();
-    res.send({ message: 'Item deleted successfully' });
-  } catch (err) {
-    res.status(500).send({ error: err.message });
+  } catch (error) {
+    console.error('[Marketplace Create Error]:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
   }
 });
 
 // GET: Fetch all marketplace items
 router.get('/', async (req, res) => {
   try {
-    const items = await MarketplaceItem.find();
-    res.send(items);
-  } catch (err) {
-    res.status(500).send({ error: err.message });
+    const items = await MarketplaceItem.find().sort('-createdAt');
+    res.json({
+      success: true,
+      data: items
+    });
+  } catch (error) {
+    console.error('[Marketplace Fetch Error]:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch items'
+    });
+  }
+});
+
+// DELETE: Delete marketplace item
+router.delete('/:id', async (req, res) => {
+  try {
+    const item = await MarketplaceItem.findById(req.params.id);
+    
+    if (!item) {
+      return res.status(404).json({
+        success: false,
+        error: 'Item not found'
+      });
+    }
+
+    // Delete image from Cloudinary if exists
+    if (item.imageUrl) {
+      try {
+        const publicId = item.imageUrl.split('/').pop().split('.')[0];
+        await cloudinary.uploader.destroy(`marketplace-items/${publicId}`);
+      } catch (cloudinaryErr) {
+        console.error('[Cloudinary Delete Error]:', cloudinaryErr);
+      }
+    }
+
+    await item.deleteOne();
+
+    res.json({
+      success: true,
+      message: 'Item deleted successfully'
+    });
+
+  } catch (error) {
+    console.error('[Marketplace Delete Error]:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to delete item'
+    });
   }
 });
 
