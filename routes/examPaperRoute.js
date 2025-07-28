@@ -15,7 +15,10 @@ const cloudinaryStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: async (req, file) => ({
     folder: 'exam-papers',
-    resource_type: 'raw',
+    resource_type: 'raw', // Keep as raw for PDFs
+    public_id: `${Date.now()}-${file.originalname.replace(/\.[^/.]+$/, "")}`, // Remove extension, Cloudinary will handle it
+    use_filename: true,
+    unique_filename: false,
   }),
 });
 
@@ -42,8 +45,8 @@ router.post('/', (req, res) => {
       if (!subject || !semester || !year || !req.file)
         return res.status(400).json({ success: false, error: 'Missing required fields' });
 
-      // Cloudinary public_id for future reference
-      const cloudinaryId = req.file.filename || req.file.public_id;
+      // Get the correct public_id from Cloudinary
+      const cloudinaryId = req.file.public_id;
 
       const paper = new ExamPaper({
         subject: subject.trim(),
@@ -53,7 +56,7 @@ router.post('/', (req, res) => {
         postedByEmail: postedByEmail?.trim() || '',
         fileType: 'pdf',
         cloudinaryId: cloudinaryId,
-        fileName: req.file.path,            // Cloudinary file URL (for reference)
+        fileName: req.file.secure_url,       // Cloudinary secure URL
         originalName: req.file.originalname, // User's upload name
         datePosted: new Date(),
       });
@@ -65,24 +68,69 @@ router.post('/', (req, res) => {
   });
 });
 
-// DOWNLOAD exam paper (PDF)
+// DOWNLOAD exam paper (PDF) - FIXED VERSION
 router.get('/download/:id', async (req, res) => {
   try {
     const paper = await ExamPaper.findById(req.params.id);
     if (!paper || !paper.cloudinaryId || paper.fileType !== 'pdf')
       return res.status(404).json({ success: false, error: 'File not found' });
 
-    // Force download with original filename
+    // Get the secure download URL from Cloudinary
     const downloadUrl = cloudinary.url(paper.cloudinaryId, {
       resource_type: 'raw',
       secure: true,
-      attachment: true,
-      filename: paper.originalName,
+      flags: 'attachment', // This forces download
+      // Add the original filename with .pdf extension
+      public_id: paper.cloudinaryId,
     });
 
+    // Set proper headers for PDF download
+    const filename = paper.originalName.endsWith('.pdf') 
+      ? paper.originalName 
+      : `${paper.originalName}.pdf`;
+    
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    
+    // Redirect to the Cloudinary URL
     return res.redirect(downloadUrl);
   } catch (error) {
     console.error('[Exam Download Error]', error);
+    res.status(500).json({ success: false, error: 'Download failed.' });
+  }
+});
+
+// Alternative download method using proxy (if the above doesn't work)
+router.get('/download-proxy/:id', async (req, res) => {
+  try {
+    const paper = await ExamPaper.findById(req.params.id);
+    if (!paper || !paper.cloudinaryId || paper.fileType !== 'pdf')
+      return res.status(404).json({ success: false, error: 'File not found' });
+
+    const https = require('https');
+    const downloadUrl = cloudinary.url(paper.cloudinaryId, {
+      resource_type: 'raw',
+      secure: true,
+    });
+
+    const filename = paper.originalName.endsWith('.pdf') 
+      ? paper.originalName 
+      : `${paper.originalName}.pdf`;
+
+    // Set headers for PDF download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+    // Proxy the file through your server
+    https.get(downloadUrl, (cloudinaryRes) => {
+      cloudinaryRes.pipe(res);
+    }).on('error', (err) => {
+      console.error('Download proxy error:', err);
+      res.status(500).json({ success: false, error: 'Download failed' });
+    });
+
+  } catch (error) {
+    console.error('[Exam Download Proxy Error]', error);
     res.status(500).json({ success: false, error: 'Download failed.' });
   }
 });
@@ -113,7 +161,8 @@ router.delete('/:id', async (req, res) => {
       try {
         await cloudinary.uploader.destroy(paper.cloudinaryId, { resource_type: 'raw' });
       } catch (err) {
-        // ignore error, continue (file might not exist)
+        console.error('Cloudinary delete error:', err);
+        // Continue with database deletion even if Cloudinary delete fails
       }
     }
 
@@ -125,4 +174,3 @@ router.delete('/:id', async (req, res) => {
 });
 
 module.exports = router;
-
