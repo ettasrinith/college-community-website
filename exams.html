@@ -743,27 +743,39 @@ async function loadSubjects() {
       option.textContent = subject;
       subjectSelect.appendChild(option);
     });
-  } catch (e) { alert('Cannot load subjects'); }
+  } catch (e) { 
+    console.error('Error loading subjects:', e);
+    alert('Cannot load subjects'); 
+  }
 }
 
 function toggleUploadForm() {
   uploadForm.style.display = uploadForm.style.display === 'block' ? 'none' : 'block';
 }
 
-// File preview
+// File preview with validation
 fileInput.addEventListener('change', () => {
   filePreview.innerHTML = '';
   if (fileInput.files.length > 0) {
     Array.from(fileInput.files).forEach(file => {
       const tag = document.createElement('span');
       tag.className = 'file-tag';
-      tag.textContent = file.name;
+      
+      // Check if it's a PDF
+      if (file.type !== 'application/pdf') {
+        tag.style.backgroundColor = '#ff6b6b';
+        tag.textContent = `${file.name} (Invalid - Only PDF allowed)`;
+      } else {
+        tag.style.backgroundColor = '#51cf66';
+        tag.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+      }
+      
       filePreview.appendChild(tag);
     });
   }
 });
 
-// Upload new paper (PDF)
+// Upload new paper (PDF) with better validation
 paperUploadForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const subject = document.getElementById('subject').value;
@@ -776,14 +788,27 @@ paperUploadForm.addEventListener('submit', async (e) => {
     return;
   }
 
+  // Validate file type
+  const file = fileInput.files[0];
+  if (file.type !== 'application/pdf') {
+    alert('Please select a PDF file only');
+    return;
+  }
+
+  // Check file size (10MB limit)
+  if (file.size > 10 * 1024 * 1024) {
+    alert('File size must be less than 10MB');
+    return;
+  }
+
   const formData = new FormData();
-  formData.append('file', fileInput.files[0]);
+  formData.append('file', file);
   formData.append('subject', subject);
   formData.append('semester', semester);
   formData.append('year', year);
   formData.append('uploadedBy', uploadedBy || 'Anonymous');
 
-  // Optional: Append current user's email if available (see your auth system)
+  // Optional: Append current user's email if available
   if (window.getCurrentUser?.() && window.getCurrentUser().email) {
     formData.append('postedByEmail', window.getCurrentUser().email);
   }
@@ -800,12 +825,13 @@ paperUploadForm.addEventListener('submit', async (e) => {
     });
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || 'Upload failed');
-    alert('Upload successful!');
+    alert('PDF uploaded successfully!');
     paperUploadForm.reset();
     filePreview.innerHTML = '';
     toggleUploadForm();
     await searchPapers();
   } catch (err) {
+    console.error('Upload error:', err);
     alert('Upload failed: ' + err.message);
   } finally {
     submitBtn.disabled = false;
@@ -813,16 +839,71 @@ paperUploadForm.addEventListener('submit', async (e) => {
   }
 });
 
-// Download handler
+// Enhanced download handler with better error handling
 window.downloadPaper = async function(paperId, originalName) {
-  window.open(`${API_BASE_URL}/papers/download/${paperId}`, '_blank');
+  try {
+    // Show loading state
+    const downloadBtn = event.target;
+    const originalText = downloadBtn.textContent;
+    downloadBtn.textContent = 'Downloading...';
+    downloadBtn.disabled = true;
+
+    // Create a temporary link for download
+    const downloadUrl = `${API_BASE_URL}/papers/download/${paperId}`;
+    
+    // Method 1: Try direct download
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = originalName.endsWith('.pdf') ? originalName : `${originalName}.pdf`;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // Reset button state
+    setTimeout(() => {
+      downloadBtn.textContent = originalText;
+      downloadBtn.disabled = false;
+    }, 2000);
+
+  } catch (error) {
+    console.error('Download error:', error);
+    alert('Download failed. Please try again.');
+    
+    // Reset button state
+    const downloadBtn = event.target;
+    downloadBtn.textContent = 'Download';
+    downloadBtn.disabled = false;
+  }
 };
 
-// List/search papers
+// Alternative download method if the above doesn't work
+window.downloadPaperProxy = async function(paperId, originalName) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/papers/download-proxy/${paperId}`);
+    if (!response.ok) throw new Error('Download failed');
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = originalName.endsWith('.pdf') ? originalName : `${originalName}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Proxy download error:', error);
+    alert('Download failed. Please try again.');
+  }
+};
+
+// List/search papers with enhanced display
 async function searchPapers() {
   const subject = subjectSelect.value;
   const semester = semesterSelect.value;
   const year = yearSelect.value;
+  
   try {
     let url = `${API_BASE_URL}/papers?`;
     const params = new URLSearchParams();
@@ -852,23 +933,33 @@ async function searchPapers() {
     papers.forEach(paper => {
       const div = document.createElement('div');
       div.className = 'paper-card';
+      
+      // Format filename to show it's a PDF
+      const displayName = paper.originalName.endsWith('.pdf') 
+        ? paper.originalName 
+        : `${paper.originalName}.pdf`;
+      
       div.innerHTML = `
         <div class="paper-header">
           <b>${paper.subject}</b>
           <span>${new Date(paper.datePosted).toLocaleDateString()}</span>
         </div>
-        <div>
-          Semester: ${paper.semester}, Year: ${paper.year}<br>
-          Uploaded by: ${paper.uploadedBy || 'Anonymous'}
+        <div class="paper-info">
+          <div>📄 ${displayName}</div>
+          <div>📚 Semester: ${paper.semester}, Year: ${paper.year}</div>
+          <div>👤 Uploaded by: ${paper.uploadedBy || 'Anonymous'}</div>
         </div>
-        <div>
-          <button onclick="downloadPaper('${paper._id}', '${paper.originalName}')">Download</button>
+        <div class="paper-actions">
+          <button class="download-btn" onclick="downloadPaper('${paper._id}', '${paper.originalName}')">
+            📥 Download PDF
+          </button>
         </div>
       `;
       papersContainer.appendChild(div);
     });
   } catch (error) {
-    papersContainer.innerHTML = `<div style="color:red;">Error loading papers. Try again.</div>`;
+    console.error('Search error:', error);
+    papersContainer.innerHTML = `<div style="color:red;">Error loading papers. Please try again.</div>`;
   }
 }
 
@@ -877,12 +968,11 @@ subjectSelect.addEventListener('change', searchPapers);
 semesterSelect.addEventListener('change', searchPapers);
 yearSelect.addEventListener('change', searchPapers);
 
-// Init
+// Initialize the app
 window.onload = () => {
   loadSubjects();
   searchPapers();
 };
-
   </script>
      <script src="/auth-check.js"></script>
 </body>
