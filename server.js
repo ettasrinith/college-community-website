@@ -59,8 +59,8 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Removed unused static file serving
-// app.use(express.static(path.join(__dirname, '.')));
+
+app.use(express.static(path.join(__dirname, '.')));
 // app.use('/exampapers', express.static(path.join(__dirname, 'public/exampapers')));
 // app.use('/sell/images', express.static(path.join(__dirname, 'sell/images')));
 // app.use('/announce', express.static(path.join(__dirname, 'announce')));
