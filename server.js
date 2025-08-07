@@ -72,18 +72,18 @@ app.use('/api/lostfound', require('./routes/lostFoundRoute'));
 app.use('/api/papers', require('./routes/examPaperRoute'));
 app.use('/api/announcements', require('./routes/announcementRoute'));
 
-// HTML routes
-//app.get('/', (req, res) => {
-   // res.sendFile(path.join(__dirname, 'index.html'));
-//});
+ HTML routes
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 
-//app.get('/login', (req, res) => {
-    //res.sendFile(path.join(__dirname, 'login.html'));
-//});
+app.get('/login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'login.html'));
+});
 
-//app.get('/dashboard', isAuthenticated, (req, res) => {
-   // res.sendFile(path.join(__dirname, 'dashboard.html'));
-//});
+app.get('/dashboard', isAuthenticated, (req, res) => {
+    res.sendFile(path.join(__dirname, 'dashboard.html'));
+});
 
 // Auth middleware
 function isAuthenticated(req, res, next) {
