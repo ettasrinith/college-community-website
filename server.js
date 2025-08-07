@@ -72,7 +72,6 @@ app.use('/api/lostfound', require('./routes/lostFoundRoute'));
 app.use('/api/papers', require('./routes/examPaperRoute'));
 app.use('/api/announcements', require('./routes/announcementRoute'));
 
- HTML routes
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
