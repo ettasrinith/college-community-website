@@ -21,30 +21,30 @@ announceDirs.forEach(dir => {
     }
 });
 
-// FIXED: Session configuration with proper settings
+// Session configuration
 app.use(session({
     secret: process.env.SESSION_SECRET || 'your_secret_key_change_this_in_production',
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({ 
         mongoUrl: process.env.MONGO_URI,
-        ttl: 14 * 24 * 60 * 60, // = 14 days
-        touchAfter: 24 * 3600 // lazy session update
+        ttl: 14 * 24 * 60 * 60,
+        touchAfter: 24 * 3600
     }),
     cookie: {
-        maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days (increased from 1 day)
-        secure: false, // FIXED: Set to false for development, true only for HTTPS in production
+        maxAge: 1000 * 60 * 60 * 24 * 7,
+        secure: false,
         httpOnly: true,
-        sameSite: 'lax' // ADDED: Important for cross-site requests
+        sameSite: 'lax'
     },
-    name: 'sessionId' // ADDED: Custom session name
+    name: 'sessionId'
 }));
 
 // Passport middleware
 app.use(passport.initialize());
 app.use(passport.session());
 
-// ADDED: Debug middleware to log session info
+// Debug middleware
 app.use((req, res, next) => {
     console.log('Session Debug:', {
         sessionID: req.sessionID,
@@ -59,40 +59,33 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files
-app.use(express.static(path.join(__dirname, '.')));
-app.use('/exampapers', express.static(path.join(__dirname, 'public/exampapers')));
-app.use('/sell/images', express.static(path.join(__dirname, 'sell/images')));
-app.use('/announce', express.static(path.join(__dirname, 'announce')));
+// Removed unused static file serving
+// app.use(express.static(path.join(__dirname, '.')));
+// app.use('/exampapers', express.static(path.join(__dirname, 'public/exampapers')));
+// app.use('/sell/images', express.static(path.join(__dirname, 'sell/images')));
+// app.use('/announce', express.static(path.join(__dirname, 'announce')));
 
 // Routes
 app.use('/auth', require('./routes/auth'));
-
-// Import other routes
-const lostFoundRoute = require('./routes/lostFoundRoute');
-const examPaperRoute = require('./routes/examPaperRoute');
-const marketplaceRoute = require('./routes/marketplaceRoute');
-const announcementsRoute = require('./routes/announcementRoute');
-
-app.use('/api/marketplace', marketplaceRoute);
-app.use('/api/lostfound', lostFoundRoute);
-app.use('/api/papers', examPaperRoute);
-app.use('/api/announcements', announcementsRoute);
+app.use('/api/marketplace', require('./routes/marketplaceRoute'));
+app.use('/api/lostfound', require('./routes/lostFoundRoute'));
+app.use('/api/papers', require('./routes/examPaperRoute'));
+app.use('/api/announcements', require('./routes/announcementRoute'));
 
 // HTML routes
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
+//app.get('/', (req, res) => {
+   // res.sendFile(path.join(__dirname, 'index.html'));
+//});
 
-app.get('/login', (req, res) => {
-    res.sendFile(path.join(__dirname, 'login.html'));
-});
+//app.get('/login', (req, res) => {
+    //res.sendFile(path.join(__dirname, 'login.html'));
+//});
 
-app.get('/dashboard', isAuthenticated, (req, res) => {
-    res.sendFile(path.join(__dirname, 'dashboard.html'));
-});
+//app.get('/dashboard', isAuthenticated, (req, res) => {
+   // res.sendFile(path.join(__dirname, 'dashboard.html'));
+//});
 
-// Authentication middleware
+// Auth middleware
 function isAuthenticated(req, res, next) {
     if (req.isAuthenticated()) {
         return next();
@@ -100,17 +93,15 @@ function isAuthenticated(req, res, next) {
     res.redirect('/login');
 }
 
-// Global error handler
+// Error handler
 app.use((err, req, res, next) => {
     console.error('[Global Error]', err);
     res.status(500).json({ error: 'Internal server error' });
 });
 
-// Start server
+// Start server (removed localhost log)
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}`);
-});
+app.listen(PORT);
 
 // Ensure logs directory exists
 const logDir = path.join(__dirname, 'logs');
