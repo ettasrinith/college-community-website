@@ -195,12 +195,17 @@
       margin-bottom: 15px;
       font-size: 1.3rem;
       font-weight: 600;
+      line-height: 1.4;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
     }
 
     .post p {
       color: #4a5568;
       margin-bottom: 10px;
       line-height: 1.6;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
     }
 
     .post strong {
@@ -365,9 +370,7 @@
 </head>
 <body>
 
-<header>
-  <h2><i class="fas fa-user-circle"></i> Your Posts Dashboard</h2>
-</header>
+
 
 <!-- Navbar -->
 <nav class="navbar">
@@ -377,11 +380,6 @@
     </div>
     <ul class="nav-menu">
       <li class="nav-item"><a href="/index.html" class="nav-link"><i class="fas fa-home"></i> Home</a></li>
-      <li class="nav-item"><a href="/lost-found.html" class="nav-link"><i class="fas fa-search"></i> Lost & Found</a></li>
-      <li class="nav-item"><a href="/marketplace.html" class="nav-link"><i class="fas fa-shopping-cart"></i> Marketplace</a></li>
-      <li class="nav-item"><a href="/exams.html" class="nav-link"><i class="fas fa-file-alt"></i> Exam Papers</a></li>
-      <li class="nav-item"><a href="/announcements.html" class="nav-link"><i class="fas fa-bullhorn"></i> Announcements</a></li>
-      <li class="nav-item"><a href="/dashboard.html" class="dashboard-btn"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
     </ul>
   </div>
 </nav>
@@ -565,7 +563,7 @@
           <h3><i class="fas fa-search"></i> ${escapeHtml(post.name)}</h3>
           <p><strong><i class="fas fa-info-circle"></i> Description:</strong> ${escapeHtml(post.description)}</p>
           <p><strong><i class="fas fa-map-marker-alt"></i> Location:</strong> ${escapeHtml(post.location)}</p>
-          <p><strong><i class="fas fa-tag"></i> Type:</strong> ${escapeHtml(post.type)}</p>
+          <p><strong><i class="fas fa-tag"></i> Type:</strong> <span style="text-transform: capitalize;">${escapeHtml(post.type)}</span></p>
           ${post.imageUrl ? `<img src="${post.imageUrl}" alt="Lost & Found Image" />` : ''}
           <p><small><i class="fas fa-calendar-alt"></i> Posted on: ${new Date(post.date).toLocaleString()}</small></p>
           <button class="delete-btn" onclick="deletePost('${post._id}', 'lost')">
@@ -587,9 +585,10 @@
         content = `
           <h3><i class="fas fa-file-pdf"></i> ${escapeHtml(post.subject)} - Semester ${post.semester}, ${post.year}</h3>
           <p><strong><i class="fas fa-user"></i> Uploaded by:</strong> ${escapeHtml(post.uploadedBy)}</p>
-          <p><strong><i class="fas fa-paperclip"></i> File:</strong> <a href="${post.fileName}" target="_blank" rel="noopener noreferrer">
+          <p><strong><i class="fas fa-paperclip"></i> File:</strong></p>
+          <a href="${post.fileName}" target="_blank" rel="noopener noreferrer" style="margin-left: 20px; white-space: nowrap;">
             <i class="fas fa-external-link-alt"></i> ${escapeHtml(post.originalName)}
-          </a></p>
+          </a>
           <p><small><i class="fas fa-calendar-alt"></i> ${new Date(post.datePosted).toLocaleString()}</small></p>
           <button class="delete-btn" onclick="deletePost('${post._id}', 'papers')">
             <i class="fas fa-trash-alt"></i> Delete
@@ -598,11 +597,13 @@
       } else if (activeTab === 'announcements') {
         content = `
           <h3><i class="fas fa-megaphone"></i> ${escapeHtml(post.title)}</h3>
-          <p>${escapeHtml(post.content || '')}</p>
-          ${post.fileUrl ? `<a href="${post.fileUrl}" target="_blank" rel="noopener noreferrer">
+          <div class="description" style="margin-bottom: 15px; line-height: 1.6; white-space: normal;">${escapeHtml(post.content || '')}</div>
+          ${post.fileUrl ? `<p><strong><i class="fas fa-paperclip"></i> Attachment:</strong></p>
+          <a href="${post.fileUrl}" target="_blank" rel="noopener noreferrer" style="margin-left: 20px; white-space: nowrap;">
             <i class="fas fa-paperclip"></i> View Attachment
           </a>` : ''}
-          <p><small><i class="fas fa-user"></i> Posted by: ${escapeHtml(post.postedByName)} on <i class="fas fa-calendar-alt"></i> ${new Date(post.datePosted).toLocaleString()}</small></p>
+          <p style="margin-top: 15px;"><small><i class="fas fa-user"></i> Posted by: ${escapeHtml(post.postedByName)}</small></p>
+          <p><small><i class="fas fa-calendar-alt"></i> ${new Date(post.datePosted).toLocaleString()}</small></p>
           <button class="delete-btn" onclick="deletePost('${post._id}', 'announcements')">
             <i class="fas fa-trash-alt"></i> Delete
           </button>
