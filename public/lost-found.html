@@ -793,12 +793,25 @@
   <script src="/auth-check.js"></script>
   <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const API_BASE_URL = '/api';
+    const API_BASE_URL = '/api/lostfound';
     const formSection = document.getElementById('reportFormSection');
     const toggleButton = document.getElementById('toggleFormBtn');
     const fileInput = document.getElementById('image');
     const itemsContainer = document.getElementById('lostItems');
     const form = document.getElementById('itemForm');
+
+    function escapeHtml(text) {
+        if (text === null || text === undefined) {
+            return '';
+        }
+
+        return String(text)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
 
     // Log element status for debugging
     console.log("formSection:", formSection);
@@ -852,8 +865,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             const formData = new FormData(this);
-            formData.append('postedBy', user._id);
-            formData.append('postedByEmail', user.email);
 
             for (let pair of formData.entries()) {
                 console.log('[FormData]', pair[0] + ': ' + pair[1]);
@@ -904,7 +915,11 @@ document.addEventListener('DOMContentLoaded', function () {
             renderItems(items, filter);
         } catch (err) {
             console.error('[Load Items Error]', err);
-            itemsContainer.innerHTML = `<div class="error">Error loading items: ${err.message}</div>`;
+            itemsContainer.innerHTML = '';
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            errorDiv.textContent = `Error loading items: ${err.message}`;
+            itemsContainer.appendChild(errorDiv);
         }
     }
 
@@ -930,32 +945,33 @@ document.addEventListener('DOMContentLoaded', function () {
             const imageUrl = hasImage
                 ? item.imageUrl
                 : 'https://via.placeholder.com/300x200?text=No+Image';
+            const itemType = item.type === 'lost' ? 'lost' : 'found';
 
             const card = document.createElement('div');
             card.className = 'item-card';
             card.innerHTML = `
                 <div class="item-image">
                     ${hasImage ? 
-                        `<img src="${imageUrl}" alt="${item.name}" onerror="this.onerror=null; this.src='https://via.placeholder.com/300x200?text=No+Image';" />` :
+                        `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(item.name)}" onerror="this.onerror=null; this.src='https://via.placeholder.com/300x200?text=No+Image';" />` :
                         `<div class="no-image">PDF or No Image</div>`
                     }
                 </div>
                 <div class="item-details">
-                    <span class="item-status ${item.type === 'lost' ? 'status-lost' : 'status-found'}">
-                        ${item.type === 'lost' ? 'Lost' : 'Found'}
+                    <span class="item-status ${itemType === 'lost' ? 'status-lost' : 'status-found'}">
+                        ${itemType === 'lost' ? 'Lost' : 'Found'}
                     </span>
-                    <h3>${item.name}</h3>
+                    <h3>${escapeHtml(item.name)}</h3>
                     <div class="item-meta">
                         <i class="fas fa-map-marker-alt"></i>
-                        <span>${item.location}</span>
+                        <span>${escapeHtml(item.location)}</span>
                     </div>
                     <div class="item-meta">
                         <i class="fas fa-calendar-alt"></i>
                         <span>${new Date(item.date).toLocaleDateString()}</span>
                     </div>
-                    <p class="item-description">${item.description}</p>
+                    <p class="item-description">${escapeHtml(item.description)}</p>
                     <div class="item-contact">
-                        <i class="fas fa-user"></i> Contact: ${item.contact}
+                        <i class="fas fa-user"></i> Contact: ${escapeHtml(item.contact)}
                     </div>
                 </div>
             `;
@@ -973,17 +989,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function showAlert(message, type) {
         const alertDiv = document.createElement('div');
-        alertDiv.className = `alert ${type}`;
-        alertDiv.innerHTML = `
-            <span>${message}</span>
-            <button class="close-btn">&times;</button>
-        `;
+        alertDiv.className = `alert ${type === 'success' ? 'success' : 'error'}`;
+
+        const messageSpan = document.createElement('span');
+        messageSpan.textContent = message;
+
+        const closeButton = document.createElement('button');
+        closeButton.className = 'close-btn';
+        closeButton.innerHTML = '&times;';
+
+        alertDiv.appendChild(messageSpan);
+        alertDiv.appendChild(closeButton);
         document.body.appendChild(alertDiv);
         setTimeout(() => {
             alertDiv.classList.add('fade-out');
             setTimeout(() => alertDiv.remove(), 300);
         }, 5000);
-        alertDiv.querySelector('.close-btn').addEventListener('click', () => {
+        closeButton.addEventListener('click', () => {
             alertDiv.remove();
         });
     }

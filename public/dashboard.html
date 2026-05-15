@@ -520,7 +520,7 @@
     try {
       let url = '';
       if (activeTab === 'lost') {
-        url = `${API_BASE_URL}/lostfound/user/${encodeURIComponent(userEmail)}`;
+        url = `${API_BASE_URL}/lostfound/my-items`;
       } else if (activeTab === 'marketplace') {
         url = `${API_BASE_URL}/marketplace`;
       } else if (activeTab === 'papers') {
@@ -532,7 +532,7 @@
       const res = await fetch(url);
       if (!res.ok) throw new Error('Failed to fetch posts');
       const data = await res.json();
-      const posts = data.data || data;
+      const posts = data.items || data.data || data;
 
       // Filter posts of this user except for lost (which already has user filter)
       const filtered = (activeTab === 'announcements' || activeTab === 'papers' || activeTab === 'marketplace')

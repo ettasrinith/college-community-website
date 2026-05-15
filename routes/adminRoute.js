@@ -1,13 +1,8 @@
 const express = require('express');
 const requireAuth = require('../middleware/requireAuth');
+const admins = require('../config/admins.json');
 
 const router = express.Router();
-
-// Admin emails
-const admins = [
-  'youradmin@gmail.com',
-  'anotheradmin@gmail.com'
-];
 
 // Check if logged-in user is admin
 router.get('/is-admin', requireAuth, (req, res) => {

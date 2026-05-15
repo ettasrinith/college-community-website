@@ -1,6 +1,5 @@
 const express = require('express');
 const multer = require('multer');
-const https = require('https');
 const ExamPaper = require('../models/ExamPaper');
 const requireAuth = require('../middleware/requireAuth');
 
@@ -155,9 +154,13 @@ router.get('/download/:id', requireAuth, async (req, res) => {
       }
     );
 
-    const filename = paper.originalName.endsWith('.pdf')
-      ? paper.originalName
-      : `${paper.originalName}.pdf`;
+    const safeOriginalName = String(
+      paper.originalName || 'file.pdf'
+    ).replace(/[^\w.\-]/g, '_');
+
+    const filename = safeOriginalName.endsWith('.pdf')
+      ? safeOriginalName
+      : `${safeOriginalName}.pdf`;
 
     res.setHeader('Content-Type', 'application/pdf');
 
@@ -171,69 +174,6 @@ router.get('/download/:id', requireAuth, async (req, res) => {
   } catch (error) {
 
     console.error('[Exam Download Error]', error);
-
-    return res.status(500).json({
-      success: false,
-      error: 'Download failed'
-    });
-  }
-});
-
-/* =========================================================
-   DOWNLOAD PROXY (AUTH REQUIRED)
-========================================================= */
-router.get('/download-proxy/:id', requireAuth, async (req, res) => {
-
-  try {
-
-    const paper = await ExamPaper.findById(req.params.id);
-
-    if (
-      !paper ||
-      !paper.cloudinaryId ||
-      paper.fileType !== 'pdf'
-    ) {
-      return res.status(404).json({
-        success: false,
-        error: 'File not found'
-      });
-    }
-
-    const downloadUrl = cloudinary.url(
-      paper.cloudinaryId,
-      {
-        resource_type: 'raw',
-        secure: true,
-      }
-    );
-
-    const filename = paper.originalName.endsWith('.pdf')
-      ? paper.originalName
-      : `${paper.originalName}.pdf`;
-
-    res.setHeader('Content-Type', 'application/pdf');
-
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename="${filename}"`
-    );
-
-    https.get(downloadUrl, (cloudinaryRes) => {
-      cloudinaryRes.pipe(res);
-
-    }).on('error', (err) => {
-
-      console.error('Download proxy error:', err);
-
-      return res.status(500).json({
-        success: false,
-        error: 'Download failed'
-      });
-    });
-
-  } catch (error) {
-
-    console.error('[Exam Download Proxy Error]', error);
 
     return res.status(500).json({
       success: false,

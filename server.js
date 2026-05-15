@@ -13,8 +13,30 @@ require('dotenv').config();
 const app = express();
 
 // Security headers
-app.use(helmet());
-app.use('/api/admin', adminRoute);
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'"],
+            scriptSrcAttr: ["'unsafe-inline'"],
+            styleSrc: [
+                "'self'",
+                "'unsafe-inline'",
+                'https://cdnjs.cloudflare.com'
+            ],
+            fontSrc: [
+                "'self'",
+                'https://cdnjs.cloudflare.com',
+                'data:'
+            ],
+            imgSrc: ["'self'", 'data:', 'https:'],
+            connectSrc: ["'self'"],
+            objectSrc: ["'none'"],
+            baseUri: ["'self'"],
+            formAction: ["'self'"]
+        }
+    }
+}));
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('MongoDB Connected'))
@@ -82,6 +104,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Routes
 app.use('/auth', require('./routes/auth'));
+app.use('/api/admin', adminRoute);
 app.use('/api/marketplace', require('./routes/marketplaceRoute'));
 app.use('/api/lostfound', require('./routes/lostFoundRoute'));
 app.use('/api/papers', require('./routes/examPaperRoute'));

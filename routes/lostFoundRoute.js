@@ -272,25 +272,29 @@ router.get('/', async (req, res) => {
 });
 
 // ======================================================
-// GET USER ITEMS
+// GET AUTHENTICATED USER ITEMS
 // ======================================================
 
-router.get('/user/:email', async (req, res) => {
+router.get('/my-items', requireAuth, async (req, res) => {
 
     try {
 
         const items = await LostItem
             .find({
-                postedByEmail: req.params.email
+                postedByEmail: req.user.email
             })
             .sort({ date: -1 });
 
-        res.json(items);
+        res.json({
+            success: true,
+            items
+        });
 
     } catch (err) {
 
         res.status(500).json({
-            error: 'Failed to fetch user items'
+            success: false,
+            error: 'Failed to fetch items'
         });
     }
 });

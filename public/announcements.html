@@ -568,7 +568,6 @@
                     </label>
                     <input type="file" id="file" name="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.gif">
                 </div>
-                <input type="hidden" id="postedByEmail" name="postedByEmail">
                 <button type="submit" class="btn">
                     <i class="fas fa-paper-plane"></i>
                     Post Announcement
@@ -595,7 +594,6 @@ const userEmailSpan = document.getElementById('userEmail');
 const logoutBtn = document.getElementById('logoutBtn');
 const announcementForm = document.getElementById('announcementForm');
 const announcementsContainer = document.getElementById('announcements');
-const postedByEmailInput = document.getElementById('postedByEmail');
 const postedByNameInput = document.getElementById('postedByName');
 
 const API_BASE_URL = '/api';
@@ -603,8 +601,16 @@ const API_BASE_URL = '/api';
 // Show notification function
 function showNotification(message, type = 'success') {
     const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-    notification.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${message}`;
+    notification.className = `notification ${type === 'success' ? 'success' : 'error'}`;
+
+    const icon = document.createElement('i');
+    icon.className = `fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}`;
+
+    const messageSpan = document.createElement('span');
+    messageSpan.textContent = ` ${message}`;
+
+    notification.appendChild(icon);
+    notification.appendChild(messageSpan);
     document.body.appendChild(notification);
     
     setTimeout(() => {
@@ -624,7 +630,6 @@ async function updateHeaderAuth() {
       userInfo.style.display = 'flex';
       userEmailSpan.textContent = data.user.email;
 
-      postedByEmailInput.value = data.user.email;
       postedByNameInput.value = data.user.name || '';
 
       // Show form only if admin (trigger check)
@@ -632,7 +637,6 @@ async function updateHeaderAuth() {
     } else {
       loginBtn.style.display = 'block';
       userInfo.style.display = 'none';
-      postedByEmailInput.value = '';
       postedByNameInput.value = '';
       announcementForm.style.display = 'none';
     }
@@ -721,7 +725,7 @@ async function loadAnnouncements() {
       let attachmentLink = '';
       if (ann.fileUrl) {
         attachmentLink = `
-          <a href="${ann.fileUrl}" class="announcement-file" target="_blank" rel="noopener noreferrer">
+          <a href="${escapeHtml(ann.fileUrl)}" class="announcement-file" target="_blank" rel="noopener noreferrer">
             <i class="fas fa-paperclip"></i>
             View Attachment
           </a>
@@ -761,8 +765,8 @@ async function loadAnnouncements() {
 
 // Escape HTML for security in displaying
 function escapeHtml(text) {
-  if (!text) return '';
-  return text.replace(/[&<>"']/g, function(m) {
+  if (text === null || text === undefined) return '';
+  return String(text).replace(/[&<>"']/g, function(m) {
     switch (m) {
       case '&': return '&amp;';
       case '<': return '&lt;';

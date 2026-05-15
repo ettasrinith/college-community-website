@@ -280,7 +280,7 @@ router.get(
                 }
 
                 // CLEAR COOKIE
-                res.clearCookie('connect.sid');
+                res.clearCookie('sessionId');
 
                 res.redirect('/login');
             });

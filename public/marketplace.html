@@ -621,6 +621,19 @@ const API_BASE_URL = '/api';
 const sellContainer = document.getElementById('sellcontainer');
 const itemForm = document.getElementById('itemForm');
 
+function escapeHtml(text) {
+  if (text === null || text === undefined) {
+    return '';
+  }
+
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 async function fetchItems() {
   try {
     const res = await fetch(`${API_BASE_URL}/marketplace`);
@@ -642,21 +655,26 @@ async function fetchItems() {
     items.forEach(item => {
       const card = document.createElement('div');
       card.className = 'sell-item';
+      const price = Number(item.itemPrice);
       card.innerHTML = `
-        ${item.imageUrl ? `<img src="${item.imageUrl}" alt="${item.itemName}">` : ''}
-        <h3>${item.itemName}</h3>
-        <p><strong>Price:</strong> ₹${item.itemPrice.toFixed(2)}</p>
-        <p>${item.itemDescription}</p>
-        <p><strong>Details:</strong> ${item.details}</p>
-        <p><strong>Category:</strong> ${item.itemCategory}</p>
-        <p><strong>Contact:</strong> ${item.contact}</p>
-        <p><strong>Posted by:</strong> ${item.postedByEmail}</p>
+        ${item.imageUrl ? `<img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.itemName)}">` : ''}
+        <h3>${escapeHtml(item.itemName)}</h3>
+        <p><strong>Price:</strong> ₹${Number.isFinite(price) ? price.toFixed(2) : '0.00'}</p>
+        <p>${escapeHtml(item.itemDescription)}</p>
+        <p><strong>Details:</strong> ${escapeHtml(item.details)}</p>
+        <p><strong>Category:</strong> ${escapeHtml(item.itemCategory)}</p>
+        <p><strong>Contact:</strong> ${escapeHtml(item.contact)}</p>
+        <p><strong>Posted by:</strong> ${escapeHtml(item.postedByEmail)}</p>
       `;
       sellContainer.appendChild(card);
     });
   } catch (err) {
     console.error('Error fetching items:', err);
-    sellContainer.innerHTML = `<p style="color:red;">Failed to load items: ${err.message}</p>`;
+    sellContainer.innerHTML = '';
+    const errorMessage = document.createElement('p');
+    errorMessage.style.color = 'red';
+    errorMessage.textContent = `Failed to load items: ${err.message}`;
+    sellContainer.appendChild(errorMessage);
   }
 }
 
@@ -676,10 +694,6 @@ itemForm.addEventListener('submit', async (e) => {
     window.location.href = '/login.html';
     return;
   }
-
-  // Append user details
-  formData.append('postedBy', user._id);
-  formData.append('postedByEmail', user.email);
 
   try {
     const res = await fetch(`${API_BASE_URL}/marketplace`, {
