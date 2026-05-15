@@ -8,7 +8,11 @@ const MongoStore = require('connect-mongo');
 const helmet = require('helmet');
 const adminRoute = require('./routes/adminRoute');
 require('dotenv').config();
-
+console.log('MONGO_URI exists:', !!process.env.MONGO_URI);
+console.log('SESSION_SECRET exists:', !!process.env.SESSION_SECRET);
+console.log('GOOGLE_CLIENT_ID exists:', !!process.env.GOOGLE_CLIENT_ID);
+console.log('GOOGLE_CLIENT_SECRET exists:', !!process.env.GOOGLE_CLIENT_SECRET);
+console.log('CLOUDINARY_CLOUD_NAME exists:', !!process.env.CLOUDINARY_CLOUD_NAME);
 // Initialize app
 const app = express();
 
