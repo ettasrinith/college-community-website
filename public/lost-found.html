@@ -866,8 +866,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const formData = new FormData(this);
 
-            for (let pair of formData.entries()) {
-                console.log('[FormData]', pair[0] + ': ' + pair[1]);
+            // Do not log form fields in production to avoid PII leakage.
+            // Optionally enable debug logging by setting window.DEBUG_FORM_LOGS = true
+            if (window.DEBUG_FORM_LOGS) {
+                for (let pair of formData.entries()) {
+                    console.log('[FormData]', pair[0] + ': ' + pair[1]);
+                }
             }
 
             try {

@@ -417,71 +417,7 @@
 </div>
 
 <!-- Auth script -->
-<script>
-  class AuthManager {
-    constructor() {
-      this.user = null;
-      this.isAuthenticated = false;
-      this.init();
-    }
-
-    async init() {
-      await this.checkAuthStatus();
-      this.setupLogoutHandler();
-    }
-
-    async checkAuthStatus() {
-      try {
-        const response = await fetch('/auth/status');
-        const data = await response.json();
-        this.isAuthenticated = data.authenticated;
-        this.user = data.user;
-        console.log('Auth status:', this.isAuthenticated, this.user);
-      } catch (error) {
-        console.error('Auth check failed:', error);
-        this.isAuthenticated = false;
-        this.user = null;
-      }
-    }
-
-    setupLogoutHandler() {
-      const logoutBtns = [document.getElementById('logoutBtn'), document.getElementById('logoutBtnSecondary')];
-      logoutBtns.forEach(logoutBtn => {
-        if (logoutBtn) {
-          logoutBtn.addEventListener('click', async () => {
-            try {
-              await fetch('/auth/logout');
-            } catch (e) {
-              console.warn('Logout failed, forcing redirect');
-            }
-            window.location.href = '/login.html';
-          });
-        }
-      });
-    }
-
-    isLoggedIn() {
-      return this.isAuthenticated;
-    }
-
-    getCurrentUser() {
-      return this.user;
-    }
-
-    requireAuth(redirectUrl = '/login.html') {
-      if (!this.isAuthenticated) {
-        window.location.href = redirectUrl;
-        return false;
-      }
-      return true;
-    }
-  }
-
-  window.authManager = new AuthManager();
-  window.getCurrentUser = () => window.authManager.getCurrentUser();
-  window.isAuthenticated = () => window.authManager.isLoggedIn();
-  window.requireAuth = (url) => window.authManager.requireAuth(url);
-</script>
+<script src="/auth-check.js"></script>
 
 <!-- Main dashboard logic -->
 <script>

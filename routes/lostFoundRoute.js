@@ -1,4 +1,3 @@
-
 const express = require('express');
 const router = express.Router();
 
@@ -45,7 +44,23 @@ const log = (message) => {
 
     const logMessage = `[${timestamp}] ${message}\n`;
 
-    logStream.write(logMessage);
+    try {
+        // Simple rotation: if log file exceeds 5MB, rotate
+        try {
+            const stats = fs.statSync(path.join(logDir, 'lostFound.log'));
+            if (stats.size > 5 * 1024 * 1024) {
+                const rotated = path.join(logDir, `lostFound-${Date.now()}.log`);
+                fs.renameSync(path.join(logDir, 'lostFound.log'), rotated);
+            }
+        } catch (e) {
+            // ignore stat errors; file may not exist yet
+        }
+
+        logStream.write(logMessage);
+    } catch (e) {
+        // Fallback to console if file write fails
+        console.error('[Log Write Error]', e);
+    }
 
     console.log(logMessage.trim());
 };
@@ -109,7 +124,8 @@ const upload = multer({
 // DEBUG
 // ======================================================
 
-console.log('[DEBUG] lostFoundRoute.js loaded');
+// Minimal startup log
+console.log('[lostFoundRoute] module loaded');
 
 // ======================================================
 // POST ITEM
@@ -121,9 +137,8 @@ router.post(
 
     (req, res) => {
 
-        console.log('[DEBUG] POST / route hit');
-
-        log('[DEBUG] POST / route hit');
+        // Minimal request-level logging
+        log('[POST] /lostfound called');
 
         upload(req, res, async (err) => {
 
@@ -416,5 +431,6 @@ module.exports = router;
 // DEBUG
 // ======================================================
 
-console.log('[DEBUG] lostFoundRoute.js module exported');
+// Module loaded. Keep logs minimal in production.
+console.log('[lostFoundRoute] module exported');
 

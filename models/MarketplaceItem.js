@@ -40,7 +40,8 @@ const marketplaceItemSchema = new mongoose.Schema({
     default: null
   },
   postedBy: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
     required: true
   },
   postedByEmail: {

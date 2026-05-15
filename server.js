@@ -42,16 +42,8 @@ mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('MongoDB Connected'))
     .catch(err => console.error('MongoDB Error:', err));
 
-// Ensure announce directories exist
-const announceDirs = ['announce', 'announce/pdfs', 'announce/images'];
-
-announceDirs.forEach(dir => {
-    const dirPath = path.join(__dirname, dir);
-
-    if (!fs.existsSync(dirPath)) {
-        fs.mkdirSync(dirPath, { recursive: true });
-    }
-});
+// Removed legacy announce directory creation (announcements now use Cloudinary).
+// Leaving note for developers: if you re-enable local announce storage, reintroduce folder creation here.
 
 // Session configuration
 app.use(session({
