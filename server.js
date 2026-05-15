@@ -6,7 +6,7 @@ const session = require('express-session');
 const passport = require('passport');
 const MongoStore = require('connect-mongo');
 const helmet = require('helmet');
-
+const adminRoute = require('./routes/adminRoute');
 require('dotenv').config();
 
 // Initialize app
@@ -14,7 +14,7 @@ const app = express();
 
 // Security headers
 app.use(helmet());
-
+app.use('/api/admin', adminRoute);
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('MongoDB Connected'))

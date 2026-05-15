@@ -628,7 +628,7 @@ async function updateHeaderAuth() {
       postedByNameInput.value = data.user.name || '';
 
       // Show form only if admin (trigger check)
-      await checkAndShowAdminForm(data.user.email);
+        await checkAndShowAdminForm();
     } else {
       loginBtn.style.display = 'block';
       userInfo.style.display = 'none';
@@ -664,24 +664,32 @@ function setupLogout() {
 }
 
 // Check if user email is in admins list and show form accordingly
-async function checkAndShowAdminForm(email) {
-  if (!email) {
-    announcementForm.style.display = 'none';
-    return;
-  }
+async function checkAndShowAdminForm() {
 
   try {
-    const res = await fetch('/config/admins.json');
-    if (!res.ok) throw new Error('Failed to load admin list');
-    const admins = await res.json();
 
-    if (admins.includes(email)) {
+    const res = await fetch('/api/admin/is-admin');
+
+    if (!res.ok) {
+      announcementForm.style.display = 'none';
+      return;
+    }
+
+    const data = await res.json();
+
+    if (data.success && data.isAdmin) {
+
       announcementForm.style.display = 'block';
+
     } else {
+
       announcementForm.style.display = 'none';
     }
+
   } catch (err) {
+
     console.warn('Admin check failed:', err);
+
     announcementForm.style.display = 'none';
   }
 }
