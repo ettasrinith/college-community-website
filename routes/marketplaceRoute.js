@@ -1,100 +1,319 @@
 const express = require('express');
+
 const MarketplaceItem = require('../models/MarketplaceItem');
+
 const multer = require('multer');
+
 const cloudinary = require('cloudinary').v2;
+
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
-const storage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    folder: 'marketplace-items',
-    allowed_formats: ['jpg', 'jpeg', 'png'],
-    transformation: [{ width: 800, height: 800, crop: 'limit' }]
-  }
-});
-const upload = multer({ storage });
+const requireAuth = require('../middleware/requireAuth');
 
 const router = express.Router();
 
-// POST: Create a new marketplace item with optional Cloudinary image
-router.post('/', upload.single('image'), async (req, res) => {
-  try {
-    const {
-      itemName,
-      itemDescription,
-      itemPrice,
-      details,
-      contact,
-      itemCategory,
-      postedBy,
-      postedByEmail
-    } = req.body;
+// ======================================================
+// CLOUDINARY CONFIG
+// ======================================================
 
-    if (!postedBy || !postedByEmail)
-      return res.status(400).send({ error: 'Missing postedBy or postedByEmail fields' });
-
-    const imageUrl = req.file ? req.file.path : null;
-
-    const itemData = {
-      itemName,
-      itemDescription,
-      itemPrice: parseFloat(itemPrice),
-      details,
-      contact,
-      itemCategory,
-      postedBy,
-      postedByEmail,
-      imageUrl,
-    };
-
-    const item = new MarketplaceItem(itemData);
-    await item.save();
-    res.status(201).send(item);
-  } catch (err) {
-    res.status(400).send({ error: err.message });
-  }
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+    secure: true
 });
 
-// DELETE: Remove marketplace item and Cloudinary image
-router.delete('/:id', async (req, res) => {
-  try {
-    const item = await MarketplaceItem.findById(req.params.id);
-    if (!item) return res.status(404).send({ error: 'Item not found' });
+// ======================================================
+// CLOUDINARY STORAGE
+// ======================================================
 
-    if (item.imageUrl) {
-      // Extract Cloudinary public_id for deletion
-      const matches = item.imageUrl.match(/\/marketplace-items\/([^/.]+)/);
-      if (matches && matches[1]) {
-        const publicId = 'marketplace-items/' + matches[1];
-        try {
-          await cloudinary.uploader.destroy(publicId);
-        } catch (err) {
-          // Ignore Cloudinary errors
-        }
-      }
+const storage = new CloudinaryStorage({
+
+    cloudinary,
+
+    params: async (req, file) => {
+
+        return {
+
+            folder: 'marketplace-items',
+
+            allowed_formats: [
+                'jpg',
+                'jpeg',
+                'png'
+            ],
+
+            transformation: [
+                {
+                    width: 800,
+                    height: 800,
+                    crop: 'limit'
+                }
+            ],
+
+            public_id: `marketplace-${Date.now()}`
+        };
     }
-
-    await item.deleteOne();
-    res.send({ message: 'Item deleted successfully' });
-  } catch (err) {
-    res.status(500).send({ error: err.message });
-  }
 });
 
-// GET: Fetch all marketplace items
+// ======================================================
+// MULTER
+// ======================================================
+
+const upload = multer({
+
+    storage,
+
+    fileFilter: (req, file, cb) => {
+
+        const allowedMimeTypes = [
+            'image/jpeg',
+            'image/jpg',
+            'image/png'
+        ];
+
+        if (allowedMimeTypes.includes(file.mimetype)) {
+
+            cb(null, true);
+
+        } else {
+
+            cb(
+                new Error(
+                    'Only JPG, JPEG, and PNG files are allowed'
+                ),
+                false
+            );
+        }
+    },
+
+    limits: {
+        fileSize: 5 * 1024 * 1024
+    }
+});
+
+// ======================================================
+// POST CREATE MARKETPLACE ITEM
+// ======================================================
+
+router.post(
+    '/',
+    requireAuth,
+    upload.single('image'),
+
+    async (req, res) => {
+
+        try {
+
+            const {
+                itemName,
+                itemDescription,
+                itemPrice,
+                details,
+                contact,
+                itemCategory
+            } = req.body;
+
+            // USER FROM SESSION
+            const postedBy = req.user._id;
+
+            const postedByEmail = req.user.email;
+
+            // VALIDATION
+            if (
+                !itemName ||
+                !itemDescription ||
+                !itemPrice ||
+                !contact
+            ) {
+
+                return res.status(400).json({
+                    error:
+                        'Missing required fields'
+                });
+            }
+
+            // IMAGE
+            let imageUrl = null;
+
+            let cloudinaryPublicId = null;
+
+            if (req.file) {
+
+                imageUrl = req.file.path;
+
+                cloudinaryPublicId =
+                    req.file.filename;
+            }
+
+            // CREATE ITEM
+            const itemData = {
+
+                itemName,
+
+                itemDescription,
+
+                itemPrice: parseFloat(itemPrice),
+
+                details,
+
+                contact,
+
+                itemCategory,
+
+                postedBy,
+
+                postedByEmail,
+
+                imageUrl,
+
+                cloudinaryPublicId
+            };
+
+            const item = new MarketplaceItem(
+                itemData
+            );
+
+            await item.save();
+
+            res.status(201).json(item);
+
+        } catch (err) {
+
+            console.error(
+                '[Marketplace POST Error]',
+                err
+            );
+
+            // CLEANUP FAILED UPLOAD
+            if (
+                req.file &&
+                req.file.filename
+            ) {
+
+                try {
+
+                    await cloudinary.uploader.destroy(
+                        req.file.filename
+                    );
+
+                } catch (cleanupErr) {
+
+                    console.error(
+                        '[Cloudinary Cleanup Error]',
+                        cleanupErr
+                    );
+                }
+            }
+
+            res.status(400).json({
+                error: err.message
+            });
+        }
+    }
+);
+
+// ======================================================
+// DELETE MARKETPLACE ITEM
+// ======================================================
+
+router.delete(
+    '/:id',
+    requireAuth,
+
+    async (req, res) => {
+
+        try {
+
+            const item =
+                await MarketplaceItem.findById(
+                    req.params.id
+                );
+
+            if (!item) {
+
+                return res.status(404).json({
+                    error: 'Item not found'
+                });
+            }
+
+            // OWNER CHECK
+            if (
+                item.postedByEmail !==
+                req.user.email
+            ) {
+
+                return res.status(403).json({
+                    error:
+                        'Not authorized to delete this item'
+                });
+            }
+
+            // DELETE CLOUDINARY IMAGE
+            if (item.cloudinaryPublicId) {
+
+                try {
+
+                    await cloudinary.uploader.destroy(
+                        item.cloudinaryPublicId
+                    );
+
+                } catch (cloudinaryErr) {
+
+                    console.error(
+                        '[Cloudinary Delete Error]',
+                        cloudinaryErr
+                    );
+                }
+            }
+
+            // DELETE ITEM
+            await item.deleteOne();
+
+            res.json({
+                message:
+                    'Item deleted successfully'
+            });
+
+        } catch (err) {
+
+            console.error(
+                '[Marketplace DELETE Error]',
+                err
+            );
+
+            res.status(500).json({
+                error: err.message
+            });
+        }
+    }
+);
+
+// ======================================================
+// GET ALL MARKETPLACE ITEMS
+// ======================================================
+
 router.get('/', async (req, res) => {
-  try {
-    const items = await MarketplaceItem.find();
-    res.send(items);
-  } catch (err) {
-    res.status(500).send({ error: err.message });
-  }
+
+    try {
+
+        const items =
+            await MarketplaceItem.find()
+                .sort({ createdAt: -1 });
+
+        res.json(items);
+
+    } catch (err) {
+
+        console.error(
+            '[Marketplace GET Error]',
+            err
+        );
+
+        res.status(500).json({
+            error: err.message
+        });
+    }
 });
 
 module.exports = router;
