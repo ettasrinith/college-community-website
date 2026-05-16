@@ -12,27 +12,51 @@ class AuthManager {
     }
 
     // Just modify the checkAuthStatus method
-async checkAuthStatus() {
-    try {
-        const response = await fetch('/auth/status', {
-            credentials: 'include' // Add this line
-        });
-        const data = await response.json();
-        
-        this.isAuthenticated = data.authenticated;
-        this.user = data.user;
-        
-        console.log('Auth status:', { 
-            authenticated: this.isAuthenticated, 
-            user: this.user 
-        });
-        
-    } catch (error) {
-        console.error('Failed to check auth status:', error);
-        this.isAuthenticated = false;
-        this.user = null;
+    async checkAuthStatus() {
+        try {
+            const response = await fetch('/auth/status', { credentials: 'include' });
+
+            // If the endpoint returned a non-OK status, treat as unauthenticated
+            if (!response.ok) {
+                this.isAuthenticated = false;
+                this.user = null;
+                return;
+            }
+
+            const data = await response.json();
+
+            this.isAuthenticated = !!data.authenticated;
+            this.user = data.user || null;
+
+            // Debug log only when explicitly enabled
+            if (window.DEBUG_AUTH) {
+                console.log('Auth status:', {
+                    authenticated: this.isAuthenticated,
+                    user: this.user
+                });
+            }
+
+            // If already authenticated and currently on the login page, redirect to the app
+            try {
+                const path = window.location.pathname || '';
+                if (this.isAuthenticated && (path.endsWith('/login.html') || path === '/login' || path === '/login.html')) {
+                    // remove any error query param to avoid showing stale error messages after redirect
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete('error');
+                    // redirect to main page
+                    window.location.href = '/index.html';
+                    return;
+                }
+            } catch (e) {
+                // ignore URL/redirect errors
+            }
+
+        } catch (error) {
+            console.error('Failed to check auth status:', error);
+            this.isAuthenticated = false;
+            this.user = null;
+        }
     }
-}
 
     updateUI() {
         // Update login/logout button
