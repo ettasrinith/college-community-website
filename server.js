@@ -16,6 +16,9 @@ console.log('CLOUDINARY_CLOUD_NAME exists:', !!process.env.CLOUDINARY_CLOUD_NAME
 // Initialize app
 const app = express();
 
+// Trust first proxy (Render, Heroku, etc.) — required for secure cookies behind reverse proxy
+app.set('trust proxy', 1);
+
 // Security headers
 app.use(helmet({
     contentSecurityPolicy: {
@@ -37,7 +40,7 @@ app.use(helmet({
             connectSrc: ["'self'"],
             objectSrc: ["'none'"],
             baseUri: ["'self'"],
-            formAction: ["'self'"]
+            formAction: ["'self'", 'https://accounts.google.com']
         }
     }
 }));

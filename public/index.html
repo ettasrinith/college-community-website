@@ -501,18 +501,36 @@
   </footer>
 <script src="/auth-check.js"></script>
     <script>
-        // Enhanced initialization with error handling
+        // Robust authentication initialization
         document.addEventListener('DOMContentLoaded', async function() {
             try {
-                // Wait for AuthManager to be available
-                if (!window.authManager) {
-                    throw new Error('AuthManager not initialized');
+                // Wait up to 3 seconds for authManager to initialize
+                const waitForAuth = async (timeoutMs = 3000) => {
+                    const start = Date.now();
+                    while (typeof window.authManager === 'undefined') {
+                        if (Date.now() - start > timeoutMs) return false;
+                        await new Promise(r => setTimeout(r, 100));
+                    }
+                    return true;
+                };
+
+                const ready = await waitForAuth(3000);
+                if (!ready) {
+                    console.warn('AuthManager not ready after timeout; treating as unauthenticated');
+                    // Redirect to login with redirect param (not an error)
+                    if (!window.location.pathname.includes('login')) {
+                        window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.pathname);
+                    }
+                    return;
                 }
 
-                // First check auth status
-                await window.authManager.checkAuthStatus();
-                
-                // Debug logging
+                // Safe call to checkAuthStatus
+                try {
+                    await window.authManager.checkAuthStatus();
+                } catch (e) {
+                    console.warn('checkAuthStatus failed:', e);
+                }
+
                 console.log('Auth status in index.html:', {
                     isAuthenticated: window.authManager.isLoggedIn(),
                     user: window.authManager.getCurrentUser(),
@@ -541,8 +559,9 @@
 
             } catch (error) {
                 console.error('Authentication initialization error:', error);
+                // Only redirect to login with error if this is not a timing issue
                 if (!window.location.pathname.includes('login')) {
-                    window.location.href = '/login.html?error=auth_error';
+                    window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.pathname);
                 }
             }
         });
