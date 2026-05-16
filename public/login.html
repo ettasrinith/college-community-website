@@ -1,59 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login</title>
-  <link rel="stylesheet" href="/css/style.css" />
+  <meta charset="UTF-8">
+  <title>Login - College Community</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #3a6186, #89253e);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: #fff;
+    }
+
+    .login-container {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+      width: 90%;
+      max-width: 400px;
+      backdrop-filter: blur(10px);
+      text-align: center;
+    }
+
+    .login-container h2 {
+      margin-bottom: 30px;
+      font-size: 28px;
+    }
+
+    .google-btn {
+      background-color: #4285F4;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+      text-decoration: none;
+    }
+
+    .google-btn:hover {
+      background-color: #357ABD;
+    }
+
+    .google-icon {
+      margin-right: 10px;
+      width: 18px;
+      height: 18px;
+    }
+
+    .message {
+      margin-top: 15px;
+      text-align: center;
+      color: #ffeb3b;
+    }
+  </style>
 </head>
 <body>
-  <header>
-    <div class="container">
-      <h1>College Community</h1>
-    </div>
-  </header>
-  <nav>
-    <ul>
-      <li><a href="/index.html">Home</a></li>
-      <li><a href="/announcements.html">Announcements</a></li>
-      <li><a href="/exams.html">Exams</a></li>
-      <li><a href="/marketplace.html">Marketplace</a></li>
-      <li><a href="/lost-found.html">Lost & Found</a></li>
-      <li><a href="/dashboard.html">Dashboard</a></li>
-    </ul>
-  </nav>
+  <div class="login-container">
+  <h2>Login with NITC Email</h2>
 
-  <main class="container" style="padding:40px 0;">
-    <section class="section-title">
-      <h2>Login</h2>
-    </section>
+  <!-- Google Sign-in Button -->
+  <a href="/auth/google" class="google-btn">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" class="google-icon" alt="Google Logo">
+    Sign in with Google
+  </a>
 
-    <div style="display:flex; justify-content:center; margin-top:20px;">
-      <a class="btn" href="/auth/google">Sign in with Google</a>
-    </div>
+  <div class="message" id="message"></div>
+</div>
 
-    <div id="errorMessage" style="color: var(--danger-color); text-align:center; margin-top:12px;"></div>
-  </main>
-
-  <footer>
-    <div class="container footer-content">
-      <div class="footer-column">
-        <h3>About</h3>
-        <p>Connecting students and faculty.</p>
-      </div>
-    </div>
-    <div style="text-align:center; padding-bottom: 20px;">&copy; College Community</div>
-  </footer>
-
-  <script src="/auth-check.js"></script>
-  <script>
-    // Show error if ?error=auth_error present
-    const urlParams = new URLSearchParams(window.location.search);
-    const err = urlParams.get('error');
-    if (err === 'auth_error') {
-      document.getElementById('errorMessage').textContent = 'Authentication failed. Please try again.';
-    }
-  </script>
-</body>
-</html>
+<script>
+  // Handle login errors from URL params
+  const urlParams = new URLSearchParams(window.location.search);
+  const error = urlParams.get('error');
+  const messageEl = document.getElementById('message');
+  if (error) {
+    const errorMessages = {
+      'auth_failed': 'Authentication failed. Please use your NITC email.',
+      'auth_error': 'Authentication error. Please try again.',
+      'session_error': 'Session error. Please clear cookies and try again.',
+    };
+    messageEl.textContent = errorMessages[error] || 'An unknown error occurred. Please try again.';
+  }
+</script>
